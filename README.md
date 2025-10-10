@@ -10,7 +10,7 @@ Network tunnel management tool supporting GOST, HAProxy, Xray, and IPTables.
 ## Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ReturnFI/Shifter
 cd shifter
 python -m pip install .
 ```
