@@ -28,11 +28,19 @@ def _get_iptables_persistence_info():
 def _get_systemd_status(service_name):
     status = {'active': 'inactive', 'enabled': 'disabled'}
     try:
-        active_result = subprocess.run(["systemctl", "is-active", "--quiet", service_name])
+        active_result = subprocess.run(
+            ["systemctl", "is-active", "--quiet", service_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
         if active_result.returncode == 0:
             status['active'] = 'active'
         
-        enabled_result = subprocess.run(["systemctl", "is-enabled", "--quiet", service_name])
+        enabled_result = subprocess.run(
+            ["systemctl", "is-enabled", "--quiet", service_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
         if enabled_result.returncode == 0:
             status['enabled'] = 'enabled'
     except FileNotFoundError:
