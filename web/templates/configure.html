@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="h-full">
+<div class="min-h-full">
+    <nav class="bg-gray-800">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-white font-bold text-lg">Shifter</div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="/" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Dashboard</a>
+                            <a href="/configure" class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Configure</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-white shadow-sm">
+        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+            <h1 class="text-lg font-semibold leading-6 text-gray-900">Configure Services</h1>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        {% if message %}
+        <div class="mb-6 rounded-md {{ 'bg-green-50' if message_type == 'success' else 'bg-red-50' }} p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 {{ 'text-green-400' if message_type == 'success' else 'text-red-400' }}" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.25-5.832z" clip-rule="evenodd" /></svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium {{ 'text-green-800' if message_type == 'success' else 'text-red-800' }}">{{ 'Success' if message_type == 'success' else 'Action Result' }}</h3>
+                    <div class="mt-2 text-sm {{ 'text-green-700' if message_type == 'success' else 'text-red-700' }}"><pre class="whitespace-pre-wrap font-mono">{{ message }}</pre></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div x-data="{ activeTab: 'gost' }">
+            <div class="sm:hidden">
+                <label for="tabs" class="sr-only">Select a tab</label>
+                <select id="tabs" x-model="activeTab" class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="gost">GOST</option><option value="haproxy">HAProxy</option><option value="xray">Xray</option><option value="iptables">IPTables</option>
+                </select>
+            </div>
+            <div class="hidden sm:block">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button @click="activeTab = 'gost'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'gost', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'gost'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">GOST</button>
+                        <button @click="activeTab = 'haproxy'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'haproxy', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'haproxy'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">HAProxy</button>
+                        <button @click="activeTab = 'xray'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'xray', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'xray'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">Xray</button>
+                        <button @click="activeTab = 'iptables'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'iptables', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'iptables'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">IPTables</button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Panels -->
+            <div class="mt-6">
+                <!-- GOST Panel -->
+                <div x-show="activeTab === 'gost'" class="space-y-6">
+                    {% if services.gost.active == 'active' %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Manage GOST Rules</h3></div><div class="border-t border-gray-200 p-0"><table class="min-w-full divide-y divide-gray-300"><thead><tr><th class="py-3.5 pl-6 text-left text-sm font-semibold text-gray-900">Rule</th><th class="relative py-3.5 pr-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200">{% for item in removable_items.gost %}<tr><td class="py-4 pl-6 text-sm font-mono text-gray-800">{{ item.port }} ({{ item.protocols }}) &rarr; {{ item.domain }}</td><td class="py-4 pr-6 text-right text-sm"><form action="/gost/remove" method="post" onsubmit="return confirm('Remove rule for port {{ item.port }}?')"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-indigo-600 hover:text-indigo-900">Remove</button></form></td></tr>{% else %}<tr><td class="py-4 pl-6 text-sm text-gray-500">No rules found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Add New Rule</h3></div><div class="border-t border-gray-200 p-6"><form action="/gost/add" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" name="domain" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Add Rule</button></div></form></div></div>
+                        <div class="bg-red-50 shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-red-800">Danger Zone</h3></div><div class="border-t border-red-200 p-6"><form action="/gost/uninstall" method="post" onsubmit="return confirm('Are you sure?')" class="flex items-center justify-between"><div><h4 class="font-medium text-gray-900">Uninstall GOST</h4><p class="text-sm text-gray-500">Permanently remove the service and configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Uninstall</button></form></div></div>
+                    {% else %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Install GOST</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><div class="border-t border-gray-200 p-6"><form action="/gost/install" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" name="domain" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Install</button></div></form></div></div>
+                    {% endif %}
+                </div>
+
+                <!-- HAProxy Panel -->
+                <div x-show="activeTab === 'haproxy'" class="space-y-6">
+                    {% if services.haproxy.active == 'active' %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Manage HAProxy Tunnels</h3></div><div class="border-t border-gray-200 p-0"><table class="min-w-full divide-y divide-gray-300"><thead><tr><th class="py-3.5 pl-6 text-left text-sm font-semibold text-gray-900">Tunnel</th><th class="relative py-3.5 pr-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200">{% for item in removable_items.haproxy %}<tr><td class="py-4 pl-6 text-sm font-mono text-gray-800">{{ item.frontend }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="py-4 pr-6 text-right text-sm"><form action="/haproxy/remove" method="post" onsubmit="return confirm('Remove {{ item.frontend }}?')"><input type="hidden" name="frontend_name" value="{{ item.frontend }}"><button type="submit" class="text-indigo-600 hover:text-indigo-900">Remove</button></form></td></tr>{% else %}<tr><td class="py-4 pl-6 text-sm text-gray-500">No tunnels found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Add New Tunnel</h3></div><div class="border-t border-gray-200 p-6"><form action="/haproxy/add" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" name="relay_port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" name="main_server_port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Add Tunnel</button></div></form></div></div>
+                        <div class="bg-red-50 shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-red-800">Danger Zone</h3></div><div class="border-t border-red-200 p-6"><form action="/haproxy/uninstall" method="post" onsubmit="return confirm('Are you sure?')" class="flex items-center justify-between"><div><h4 class="font-medium text-gray-900">Uninstall HAProxy</h4><p class="text-sm text-gray-500">Permanently remove the service and configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Uninstall</button></form></div></div>
+                    {% else %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Install HAProxy</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><div class="border-t border-gray-200 p-6"><form action="/haproxy/install" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" name="relay_port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-2"><label class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" name="main_server_port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Install</button></div></form></div></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Xray Panel -->
+                <div x-show="activeTab === 'xray'" class="space-y-6">
+                    {% if services.xray.active == 'active' %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Manage Xray Inbounds</h3></div><div class="border-t border-gray-200 p-0"><table class="min-w-full divide-y divide-gray-300"><thead><tr><th class="py-3.5 pl-6 text-left text-sm font-semibold text-gray-900">Inbound</th><th class="relative py-3.5 pr-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200">{% for item in removable_items.xray %}<tr><td class="py-4 pl-6 text-sm font-mono text-gray-800">{{ item.tag }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="py-4 pr-6 text-right text-sm"><form action="/xray/remove" method="post" onsubmit="return confirm('Remove inbound for port {{ item.port }}?')"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-indigo-600 hover:text-indigo-900">Remove</button></form></td></tr>{% else %}<tr><td class="py-4 pl-6 text-sm text-gray-500">No inbounds found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Add New Inbound</h3></div><div class="border-t border-gray-200 p-6"><form action="/xray/add" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Destination</label><input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Add Inbound</button></div></form></div></div>
+                        <div class="bg-red-50 shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-red-800">Danger Zone</h3></div><div class="border-t border-red-200 p-6"><form action="/xray/uninstall" method="post" onsubmit="return confirm('Are you sure?')" class="flex items-center justify-between"><div><h4 class="font-medium text-gray-900">Uninstall Xray</h4><p class="text-sm text-gray-500">Permanently remove the service and configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Uninstall</button></form></div></div>
+                    {% else %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Install Xray</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><div class="border-t border-gray-200 p-6"><form action="/xray/install" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Destination</label><input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Install</button></div></form></div></div>
+                    {% endif %}
+                </div>
+
+                <!-- IPTables Panel -->
+                <div x-show="activeTab === 'iptables'" class="space-y-6">
+                     {% if services.iptables.active == 'active' %}
+                        <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Current IPTables Rules</h3></div><div class="border-t border-gray-200 p-6"><ul class="list-disc list-inside text-sm font-mono space-y-2">{% for detail in services.iptables.details %}<li>{{ detail }}</li>{% else %}<li>No forwarding rules found.</li>{% endfor %}</ul></div></div>
+                        <div class="bg-red-50 shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-red-800">Danger Zone</h3></div><div class="border-t border-red-200 p-6"><form action="/iptables/uninstall" method="post" onsubmit="return confirm('Are you sure?')" class="flex items-center justify-between"><div><h4 class="font-medium text-gray-900">Uninstall IPTables</h4><p class="text-sm text-gray-500">This will flush all rules and remove persistence.</p></div><button type="submit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Uninstall</button></form></div></div>
+                   {% else %}
+                       <div class="bg-white shadow sm:rounded-lg"><div class="px-4 py-5 sm:px-6"><h3 class="text-base font-semibold text-gray-900">Install IPTables Rules</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install rules to begin.</p></div><div class="border-t border-gray-200 p-6"><form action="/iptables/install" method="post" class="space-y-4"><div class="grid grid-cols-6 gap-6"><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div><div class="col-span-6 sm:col-span-3"><label class="block text-sm font-medium text-gray-700">Ports (e.g., 80,443)</label><input type="text" name="ports" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" required></div></div><div class="flex justify-end"><button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Install Rules</button></div></form></div></div>
+                    {% endif %}
+               </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

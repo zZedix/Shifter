@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shifter Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <nav class="bg-gray-800">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 text-white font-bold text-lg">
+                            Shifter
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <a href="/" class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Dashboard</a>
+                                <a href="/configure" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Configure</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <header class="bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                <h1 class="text-lg font-semibold leading-6 text-gray-900">Service Dashboard</h1>
+            </div>
+        </header>
+
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for service_name, data in services.items() %}
+                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <!-- Simple Icon Placeholder -->
+                                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 16.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0021 12c0-1.181-.223-2.317-.638-3.362" /></svg>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="truncate text-sm font-medium text-gray-500 capitalize">{{ service_name }}</dt>
+                                        <dd>
+                                            <div class="text-lg font-medium text-gray-900">
+                                                {% if data.active == 'active' %}
+                                                    <span class="text-green-600">Active</span>
+                                                {% else %}
+                                                    <span class="text-red-600">Inactive</span>
+                                                {% endif %}
+                                            </div>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-5 py-3">
+                            <h3 class="font-semibold text-gray-700 mb-2 text-sm">Configuration</h3>
+                            <div class="text-xs text-gray-800 space-y-1">
+                                {% if data.details %}
+                                   {% for detail_line in data.details %}
+                                       <p class="font-mono bg-gray-200 p-1 rounded break-words">{{ detail_line }}</p>
+                                   {% endfor %}
+                                {% else %}
+                                   <p class="text-gray-500">No configuration found.</p>
+                                {% endif %}
+                           </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
