@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "port-shifter"
 version = "0.1.0"
-description = "CLI toolkit for managing network tunnels and services"
+description = "CLI toolkit for managing network tunnels and services with a web UI"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
@@ -18,13 +18,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: System :: Networking",
+    "Framework :: AIOHTTP",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
 ]
 dependencies = [
     "requests>=2.25",
     "click>=8.0",
     "aiohttp>=3.8",
     "aiohttp_jinja2>=1.5",
-    "jinja2>=3.0"
+    "jinja2>=3.0",
+    "aiohttp-session[secure]>=2.11"
 ]
 
 [project.scripts]
