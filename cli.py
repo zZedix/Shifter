@@ -19,7 +19,7 @@ def cli():
 # --- Web UI Command ---
 @cli.command()
 @click.option('--host', default='127.0.0.1', help='Host to bind the web server to.')
-@click.option('--port', default=8080, type=int, help='Port to run the web server on.')
+@click.option('--port', default=2063, type=int, help='Port to run the web server on.')
 def serve(host, port):
     """Launch the Shifter web UI dashboard."""
     from web.app import create_app

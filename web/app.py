@@ -18,11 +18,5 @@ def create_app():
     )
     
     app.add_routes(routes)
-    
-    app.router.add_static(
-        '/static/',
-        path=os.path.join(base_dir, 'static'),
-        name='static'
-    )
-    
+
     return app
