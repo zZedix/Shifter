@@ -1,8 +1,9 @@
 import sys
 import asyncio
 from aiohttp import web
+from aiohttp_session import get_session
 import aiohttp_jinja2
-from urllib.parse import quote, unquote
+from urllib.parse import unquote
 
 from scripts import status as status_module
 from scripts import gost, xray, haproxy, iptables
@@ -12,7 +13,6 @@ routes = web.RouteTableDef()
 async def _run_cli_command(command_parts):
     """
     Runs a shifter CLI command as a subprocess and captures its output.
-    This is the bridge between the web UI and the core CLI logic.
     """
     command = [sys.executable, 'cli.py'] + command_parts
     
@@ -28,9 +28,11 @@ async def _run_cli_command(command_parts):
 
 async def _handle_form_action(request, redirect_url='/configure'):
     """
-    A generic handler for form submissions that call the CLI.
+    A generic handler for form submissions that calls the CLI.
+    It now uses sessions for flash messages instead of URL query parameters.
     """
     post_data = await request.post()
+    session = await get_session(request)
     
     path_parts = request.path.strip('/').split('/')
     service, action = path_parts[0], path_parts[1]
@@ -45,8 +47,10 @@ async def _handle_form_action(request, redirect_url='/configure'):
     
     message_type = 'success' if return_code == 0 else 'error'
     
-    location = f"{redirect_url}?message={quote(output)}&type={message_type}"
-    raise web.HTTPFound(location)
+    # Store the message in the session
+    session['flash'] = {'type': message_type, 'message': output}
+    
+    raise web.HTTPFound(redirect_url)
 
 
 @routes.get('/')
@@ -59,9 +63,11 @@ async def dashboard(request):
 @routes.get('/configure')
 @aiohttp_jinja2.template('configure.html')
 async def configure_page(request):
-    """Renders the configuration page, passing status data and any flash messages."""
-    message = request.query.get('message', '')
-    message_type = request.query.get('type', 'info')
+    """Renders the configuration page, passing status data and any flash messages from the session."""
+    session = await get_session(request)
+    
+    # Retrieve and clear the flash message from the session
+    flash_message = session.pop('flash', None)
     
     status_data = status_module.get_all_services_status()
     
@@ -72,8 +78,7 @@ async def configure_page(request):
     }
     
     return {
-        'message': unquote(message), 
-        'message_type': message_type,
+        'flash': flash_message,
         'services': status_data,
         'removable_items': removable_items
     }

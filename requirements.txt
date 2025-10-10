@@ -3,3 +3,4 @@ requests
 aiohttp
 aiohttp_jinja2
 jinja2
+aiohttp-session[secure]
