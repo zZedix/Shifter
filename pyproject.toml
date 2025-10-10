@@ -7,9 +7,9 @@ name = "Shifter"
 version = "0.1.0"
 description = "CLI toolkit for managing network tunnels and services with a web UI"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
-authors = [{ name = "Shifter Maintainers" }]
+authors = [{ name = "ReturnFI" }]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
