@@ -1,4 +1,3 @@
-```markdown
 # Shifter
 
 Network tunnel management tool supporting GOST, HAProxy, Xray, and IPTables.
