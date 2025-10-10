@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-repository_url = "https://raw.githubusercontent.com/ReturnFI/Port-Shifter/refs/heads/main/"
-config_path = "/opt/Port-Shifter/config/"
+repository_url = "https://raw.githubusercontent.com/ReturnFI/Shifter/refs/heads/main/"
+config_path = "/opt/Shifter/config/"
 GOST_SERVICE_PATH = "/usr/lib/systemd/system/gost.service"
 GOST_BINARY_PATH = "/usr/local/bin/gost"
 HAPROXY_CONFIG_PATH = "/etc/haproxy/haproxy.cfg"
