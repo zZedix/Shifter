@@ -1,83 +1,41 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-100">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shifter Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="h-full">
-    <div class="min-h-full">
-        <nav class="bg-white border-b border-gray-200">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 text-gray-800 font-bold text-lg">Shifter</div>
-                        <div class="hidden md:block">
-                            <div class="ml-10 flex items-baseline space-x-4">
-                                <a href="/" class="bg-slate-200 text-slate-900 rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Dashboard</a>
-                                <a href="/configure" class="text-gray-500 hover:bg-slate-100 hover:text-gray-900 rounded-md px-3 py-2 text-sm font-medium">Configure</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
+{% extends "base.html" %}
 
-        <header class="bg-white shadow-sm">
-            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                <h1 class="text-xl font-bold tracking-tight text-gray-900">Service Dashboard</h1>
-            </div>
-        </header>
+{% block title %}Shifter Dashboard{% endblock %}
+{% block header_title %}Service Dashboard{% endblock %}
 
-        <main class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                {% set service_colors = {
-                    'gost': 'border-blue-500',
-                    'haproxy': 'border-amber-500',
-                    'xray': 'border-violet-500',
-                    'iptables': 'border-teal-500'
-                } %}
-                {% for service_name, data in services.items() %}
-                <div class="flex flex-col rounded-lg bg-white shadow-lg overflow-hidden border-t-4 {{ service_colors.get(service_name, 'border-gray-500') }}">
-                    <div class="flex items-center justify-between p-4 sm:p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 capitalize">{{ service_name }}</h3>
-                        <span class="inline-flex items-center gap-x-1.5 rounded-full px-2.5 py-1 text-xs font-medium 
-                            {% if data.active == 'active' %}
-                                bg-green-100 text-green-800
-                            {% else %}
-                                bg-red-100 text-red-800
-                            {% endif %}
-                        ">
-                            <svg class="h-2 w-2 
-                                {% if data.active == 'active' %}
-                                    fill-green-500
-                                {% else %}
-                                    fill-red-500
-                                {% endif %}" 
-                                viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" /></svg>
-                            {{ 'Active' if data.active == 'active' else 'Inactive' }}
-                        </span>
-                    </div>
-
-                    <div class="px-4 py-5 sm:p-6 flex-grow bg-slate-50 border-t border-gray-200">
-                        <h4 class="text-sm font-medium text-slate-600">Configuration Details</h4>
-                        <div class="mt-4 text-sm text-gray-800">
-                            {% if data.details %}
-                               <ul class="space-y-2">
-                               {% for detail_line in data.details %}
-                                   <li class="font-mono bg-white p-3 rounded-md border border-slate-200 shadow-sm break-words text-slate-700">{{ detail_line }}</li>
-                               {% endfor %}
-                               </ul>
-                            {% else %}
-                               <p class="text-slate-500 italic">No configuration details available.</p>
-                            {% endif %}
-                       </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </main>
+{% block content %}
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 sm:gap-8">
+    {% set service_colors = {
+        'gost': 'border-blue-500',
+        'haproxy': 'border-amber-500',
+        'xray': 'border-violet-500',
+        'iptables': 'border-teal-500'
+    } %}
+    {% for service_name, data in services.items() %}
+    <div class="flex flex-col rounded-lg bg-white shadow-lg overflow-hidden border-t-4 {{ service_colors.get(service_name, 'border-gray-500') }}">
+        <div class="flex items-center justify-between p-4 sm:p-6">
+            <h3 class="text-lg font-semibold text-gray-900 capitalize">{{ service_name }}</h3>
+            <span class="inline-flex items-center gap-x-1.5 rounded-full px-2.5 py-1 text-xs font-medium 
+                {% if data.active == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                <svg class="h-2 w-2 {% if data.active == 'active' %}fill-green-500{% else %}fill-red-500{% endif %}" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" /></svg>
+                {{ 'Active' if data.active == 'active' else 'Inactive' }}
+            </span>
+        </div>
+        <div class="px-4 py-5 sm:p-6 flex-grow bg-slate-50 border-t border-gray-200">
+            <h4 class="text-sm font-medium text-slate-600">Configuration Details</h4>
+            <div class="mt-4 text-sm text-gray-800">
+                {% if data.details %}
+                   <ul class="space-y-2">
+                   {% for detail_line in data.details %}
+                       <li class="font-mono bg-white p-3 rounded-md border border-slate-200 shadow-sm break-words text-slate-700">{{ detail_line }}</li>
+                   {% endfor %}
+                   </ul>
+                {% else %}
+                   <p class="text-slate-500 italic">No configuration details available.</p>
+                {% endif %}
+           </div>
+        </div>
     </div>
-</body>
-</html>
+    {% endfor %}
+</div>
+{% endblock %}

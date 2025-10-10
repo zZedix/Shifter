@@ -1,149 +1,128 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-100">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configure Services - Shifter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style> .swal2-popup { font-size: 0.95rem; } </style>
-</head>
-<body class="h-full">
+{% extends "base.html" %}
 
-<div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 hidden">
-    <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
+{% block title %}Configure Services - Shifter{% endblock %}
+{% block header_title %}Service Configuration{% endblock %}
+
+{% block content %}
+{% if flash %}
+<div class="mb-6 rounded-md {{ 'bg-green-50' if flash.type == 'success' else 'bg-red-50' }} p-4 border {{ 'border-green-300' if flash.type == 'success' else 'border-red-300' }} shadow-sm">
+    <div class="flex"><div class="flex-shrink-0">
+        {% if flash.type == 'success' %}<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.25-5.832z" clip-rule="evenodd" /></svg>
+        {% else %}<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" /></svg>{% endif %}
+    </div><div class="ml-3"><h3 class="text-sm font-medium {{ 'text-green-800' if flash.type == 'success' else 'text-red-800' }}">{{ 'Success' if flash.type == 'success' else 'Error' }}</h3><div class="mt-2 text-sm {{ 'text-green-700' if flash.type == 'success' else 'text-red-700' }}"><pre class="whitespace-pre-wrap font-mono">{{ flash.message }}</pre></div></div></div>
 </div>
+{% endif %}
 
-<div class="min-h-full">
-    <nav class="bg-white border-b border-gray-200">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 items-center justify-between">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 text-gray-800 font-bold text-lg">Shifter</div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="/" class="text-gray-500 hover:bg-slate-100 hover:text-gray-900 rounded-md px-3 py-2 text-sm font-medium">Dashboard</a>
-                            <a href="/configure" class="bg-slate-200 text-slate-900 rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Configure</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div x-data="{ activeTab: 'gost' }">
+    <div class="mb-6">
+        <div class="sm:hidden">
+            <label for="tabs" class="sr-only">Select a tab</label>
+            <select id="tabs" x-model="activeTab" class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="gost">GOST</option><option value="haproxy">HAProxy</option><option value="xray">Xray</option><option value="iptables">IPTables</option>
+            </select>
         </div>
-    </nav>
-
-    <header class="bg-white shadow-sm">
-        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8"><h1 class="text-xl font-bold tracking-tight text-gray-900">Service Configuration</h1></div>
-    </header>
-
-    <main class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-        {% if flash %}
-        <div class="mb-6 rounded-md {{ 'bg-green-50' if flash.type == 'success' else 'bg-red-50' }} p-4 border {{ 'border-green-300' if flash.type == 'success' else 'border-red-300' }} shadow-sm">
-            <div class="flex"><div class="flex-shrink-0">
-                {% if flash.type == 'success' %}<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l4.25-5.832z" clip-rule="evenodd" /></svg>
-                {% else %}<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" /></svg>{% endif %}
-            </div><div class="ml-3"><h3 class="text-sm font-medium {{ 'text-green-800' if flash.type == 'success' else 'text-red-800' }}">{{ 'Success' if flash.type == 'success' else 'Error' }}</h3><div class="mt-2 text-sm {{ 'text-green-700' if flash.type == 'success' else 'text-red-700' }}"><pre class="whitespace-pre-wrap font-mono">{{ flash.message }}</pre></div></div></div>
-        </div>
-        {% endif %}
-
-        <div x-data="{ activeTab: 'gost' }">
-            <div class="mb-6"><div class="hidden sm:block"><div class="border-b border-gray-200">
+        <div class="hidden sm:block">
+            <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                     <button @click="activeTab = 'gost'" :class="{'border-blue-500 text-blue-600': activeTab === 'gost', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'gost'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">GOST</button>
                     <button @click="activeTab = 'haproxy'" :class="{'border-amber-500 text-amber-600': activeTab === 'haproxy', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'haproxy'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">HAProxy</button>
                     <button @click="activeTab = 'xray'" :class="{'border-violet-500 text-violet-600': activeTab === 'xray', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'xray'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">Xray</button>
                     <button @click="activeTab = 'iptables'" :class="{'border-teal-500 text-teal-600': activeTab === 'iptables', 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': activeTab !== 'iptables'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">IPTables</button>
                 </nav>
-            </div></div></div>
-
-            <div class="mt-6">
-                <!-- GOST Panel -->
-                <div x-show="activeTab === 'gost'" class="space-y-8">
-                    {% set card_border_class = 'border-t-4 border-blue-500' %}
-                    {% if services.gost.active == 'active' %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Manage GOST Rules</h3></div><div class="p-0"><table class="min-w-full"><thead class="bg-slate-50"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rule</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200">{% for item in removable_items.gost %}<tr><td class="px-6 py-4 text-sm font-mono text-gray-800">{{ item.port }} ({{ item.protocols }}) &rarr; {{ item.domain }}</td><td class="px-6 py-4 text-right"><form action="/gost/remove" method="post" data-confirm-message="Remove rule for port {{ item.port }}?"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800">Remove</button></form></td></tr>{% else %}<tr><td class="px-6 py-4 text-sm text-gray-500 italic">No rules found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Add New Rule</h3></div><form action="/gost/add" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-2"><div><label class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" name="domain" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Add Rule</button></div></form></div>
-                        <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/gost/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall GOST?" class="flex items-center justify-between"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and all its configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Uninstall GOST</button></form></div>
-                    {% else %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Install GOST</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install and configure it to begin.</p></div><form action="/gost/install" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-2"><div><label class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" name="domain" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install GOST</button></div></form></div>
-                    {% endif %}
-                </div>
-
-                <!-- HAProxy Panel -->
-                <div x-show="activeTab === 'haproxy'" class="space-y-8">
-                    {% set card_border_class = 'border-t-4 border-amber-500' %}
-                    {% if services.haproxy.active == 'active' %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Manage HAProxy Tunnels</h3></div><div class="p-0"><table class="min-w-full"><thead class="bg-slate-50"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase">Tunnel</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y">{% for item in removable_items.haproxy %}<tr><td class="px-6 py-4 font-mono text-sm">{{ item.frontend }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="px-6 py-4 text-right"><form action="/haproxy/remove" method="post" data-confirm-message="Remove tunnel {{ item.frontend }}?"><input type="hidden" name="frontend_name" value="{{ item.frontend }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800">Remove</button></form></td></tr>{% else %}<tr><td class="px-6 py-4 text-sm text-gray-500 italic">No tunnels found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Add New Tunnel</h3></div><form action="/haproxy/add" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-3"><div><label class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" name="relay_port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" name="main_server_port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Add Tunnel</button></div></form></div>
-                        <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/haproxy/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall HAProxy?" class="flex items-center justify-between"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall HAProxy</button></form></div>
-                    {% else %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Install HAProxy</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><form action="/haproxy/install" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-3"><div><label class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" name="relay_port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" name="main_server_port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install HAProxy</button></div></form></div>
-                    {% endif %}
-                </div>
-                
-                <!-- Xray Panel -->
-                <div x-show="activeTab === 'xray'" class="space-y-8">
-                    {% set card_border_class = 'border-t-4 border-violet-500' %}
-                     {% if services.xray.active == 'active' %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Manage Xray Inbounds</h3></div><div class="p-0"><table class="min-w-full"><thead class="bg-slate-50"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase">Inbound</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y">{% for item in removable_items.xray %}<tr><td class="px-6 py-4 font-mono text-sm">{{ item.tag }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="px-6 py-4 text-right"><form action="/xray/remove" method="post" data-confirm-message="Remove inbound for port {{ item.port }}?"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800">Remove</button></form></td></tr>{% else %}<tr><td class="px-6 py-4 text-sm text-gray-500 italic">No inbounds found.</td><td></td></tr>{% endfor %}</tbody></table></div></div>
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Add New Inbound</h3></div><form action="/xray/add" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-gray-700">Destination</label><input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Add Inbound</button></div></form></div>
-                        <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/xray/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall Xray?" class="flex items-center justify-between"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and configuration.</p></div><button type="submit" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall Xray</button></form></div>
-                    {% else %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Install Xray</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><form action="/xray/install" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-gray-700">Destination</label><input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" name="port" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install Xray</button></div></form></div>
-                    {% endif %}
-                </div>
-
-                <!-- IPTables Panel -->
-                <div x-show="activeTab === 'iptables'" class="space-y-8">
-                    {% set card_border_class = 'border-t-4 border-teal-500' %}
-                     {% if services.iptables.active == 'active' %}
-                        <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Current IPTables Rules</h3></div><div class="p-6 bg-slate-50 border-t"><ul class="space-y-2 text-sm font-mono text-slate-700">{% for detail in services.iptables.details %}<li class="bg-white p-3 rounded-md border border-slate-200 shadow-sm">{{ detail }}</li>{% else %}<li class="italic text-slate-500">No forwarding rules found.</li>{% endfor %}</ul></div></div>
-                        <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/iptables/uninstall" method="post" data-confirm-message="This will flush all rules and remove persistence. Are you sure?" class="flex items-center justify-between"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">This will flush all rules and remove persistence.</p></div><button type="submit" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall Rules</button></form></div>
-                    {% else %}
-                       <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-6 py-4"><h3 class="text-lg font-medium">Install IPTables Rules</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install rules to begin.</p></div><form action="/iptables/install" method="post"><div class="p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" name="main_server_ip" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label class="block text-sm font-medium text-gray-700">Ports (e.g., 80,443)</label><input type="text" name="ports" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-6 py-4 bg-slate-100 text-right"><button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install Rules</button></div></form></div>
-                    {% endif %}
-               </div>
             </div>
         </div>
-    </main>
-</div>
+    </div>
 
+    <div class="mt-6">
+        <!-- GOST Panel -->
+        <div x-show="activeTab === 'gost'" class="space-y-8">
+            {% set card_border_class = 'border-t-4 border-blue-500' %}
+            {% if services.gost.active == 'active' %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}">
+                    <div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Manage GOST Rules</h3></div>
+                    <div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50 hidden md:table-header-group"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rule</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200 md:divide-y-0">
+                    {% for item in removable_items.gost %}
+                        <tr class="block md:table-row"><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 text-sm font-mono text-gray-800 whitespace-normal"><span class="font-bold text-slate-600 md:hidden">Rule: </span>{{ item.port }} ({{ item.protocols }}) &rarr; {{ item.domain }}</td><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 text-right border-t md:border-0"><form action="/gost/remove" method="post" data-confirm-message="Remove rule for port {{ item.port }}?"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 w-full md:w-auto rounded-md bg-red-50 hover:bg-red-100 p-2 md:p-0 md:bg-transparent">Remove</button></form></td></tr>
+                    {% else %}
+                        <tr class="block md:table-row"><td class="px-4 md:px-6 py-4 text-sm text-gray-500 italic">No rules found.</td></tr>
+                    {% endfor %}
+                    </tbody></table></div>
+                </div>
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Add New Rule</h3></div><form action="/gost/add" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-2"><div><label for="gost_add_domain" class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" id="gost_add_domain" name="domain" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="gost_add_port" class="block text-sm font-medium text-gray-700">Port</label><input type="number" id="gost_add_port" name="port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Add Rule</button></div></form></div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/gost/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall GOST?" class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 text-center sm:text-left"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and all its configuration.</p></div><button type="submit" class="w-full sm:w-auto rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall GOST</button></form></div>
+            {% else %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium text-gray-900">Install GOST</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><form action="/gost/install" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-2"><div><label for="gost_install_domain" class="block text-sm font-medium text-gray-700">Domain/IP</label><input type="text" id="gost_install_domain" name="domain" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="gost_install_port" class="block text-sm font-medium text-gray-700">Port</label><input type="number" id="gost_install_port" name="port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install GOST</button></div></form></div>
+            {% endif %}
+        </div>
+
+        <!-- HAProxy Panel -->
+        <div x-show="activeTab === 'haproxy'" class="space-y-8">
+            {% set card_border_class = 'border-t-4 border-amber-500' %}
+            {% if services.haproxy.active == 'active' %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Manage HAProxy Tunnels</h3></div><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50 hidden md:table-header-group"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase">Tunnel</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200 md:divide-y-0">
+                {% for item in removable_items.haproxy %}
+                    <tr class="block md:table-row"><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 font-mono text-sm whitespace-normal"><span class="font-bold text-slate-600 md:hidden">Tunnel: </span>{{ item.frontend }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 text-right border-t md:border-0"><form action="/haproxy/remove" method="post" data-confirm-message="Remove tunnel {{ item.frontend }}?"><input type="hidden" name="frontend_name" value="{{ item.frontend }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 w-full md:w-auto rounded-md bg-red-50 hover:bg-red-100 p-2 md:p-0 md:bg-transparent">Remove</button></form></td></tr>
+                {% else %}
+                    <tr class="block md:table-row"><td class="px-4 md:px-6 py-4 text-sm text-gray-500 italic">No tunnels found.</td></tr>
+                {% endfor %}
+                </tbody></table></div></div>
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Add New Tunnel</h3></div><form action="/haproxy/add" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-3"><div><label for="haproxy_add_relay_port" class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" id="haproxy_add_relay_port" name="relay_port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="haproxy_add_main_ip" class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" id="haproxy_add_main_ip" name="main_server_ip" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="haproxy_add_main_port" class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" id="haproxy_add_main_port" name="main_server_port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Add Tunnel</button></div></form></div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/haproxy/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall HAProxy?" class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 text-center sm:text-left"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and configuration.</p></div><button type="submit" class="w-full sm:w-auto rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall HAProxy</button></form></div>
+            {% else %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Install HAProxy</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><form action="/haproxy/install" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 gap-6 sm:grid-cols-3"><div><label for="haproxy_install_relay_port" class="block text-sm font-medium text-gray-700">Relay Port</label><input type="number" id="haproxy_install_relay_port" name="relay_port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="haproxy_install_main_ip" class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" id="haproxy_install_main_ip" name="main_server_ip" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="haproxy_install_main_port" class="block text-sm font-medium text-gray-700">Main Server Port</label><input type="number" id="haproxy_install_main_port" name="main_server_port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install HAProxy</button></div></form></div>
+            {% endif %}
+        </div>
+        
+        <!-- Xray Panel -->
+        <div x-show="activeTab === 'xray'" class="space-y-8">
+            {% set card_border_class = 'border-t-4 border-violet-500' %}
+             {% if services.xray.active == 'active' %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Manage Xray Inbounds</h3></div><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50 hidden md:table-header-group"><tr><th class="py-3 px-6 text-left text-xs font-medium text-slate-500 uppercase">Inbound</th><th class="relative py-3 px-6"><span class="sr-only">Remove</span></th></tr></thead><tbody class="divide-y divide-gray-200 md:divide-y-0">
+                {% for item in removable_items.xray %}
+                    <tr class="block md:table-row"><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 font-mono text-sm whitespace-normal"><span class="font-bold text-slate-600 md:hidden">Inbound: </span>{{ item.tag }} ({{ item.port }}) &rarr; {{ item.destination }}</td><td class="block md:table-cell px-4 py-3 md:px-6 md:py-4 text-right border-t md:border-0"><form action="/xray/remove" method="post" data-confirm-message="Remove inbound for port {{ item.port }}?"><input type="hidden" name="port" value="{{ item.port }}"><button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 w-full md:w-auto rounded-md bg-red-50 hover:bg-red-100 p-2 md:p-0 md:bg-transparent">Remove</button></form></td></tr>
+                {% else %}
+                    <tr class="block md:table-row"><td class="px-4 md:px-6 py-4 text-sm text-gray-500 italic">No inbounds found.</td></tr>
+                {% endfor %}
+                </tbody></table></div></div>
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Add New Inbound</h3></div><form action="/xray/add" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label for="xray_add_address" class="block text-sm font-medium text-gray-700">Destination</label><input type="text" id="xray_add_address" name="address" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="xray_add_port" class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" id="xray_add_port" name="port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Add Inbound</button></div></form></div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/xray/uninstall" method="post" data-confirm-message="Are you sure you want to uninstall Xray?" class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 text-center sm:text-left"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">Permanently remove the service and configuration.</p></div><button type="submit" class="w-full sm:w-auto rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall Xray</button></form></div>
+            {% else %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Install Xray</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install it to begin.</p></div><form action="/xray/install" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label for="xray_install_address" class="block text-sm font-medium text-gray-700">Destination</label><input type="text" id="xray_install_address" name="address" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="xray_install_port" class="block text-sm font-medium text-gray-700">Inbound Port</label><input type="number" id="xray_install_port" name="port" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install Xray</button></div></form></div>
+            {% endif %}
+        </div>
+
+        <!-- IPTables Panel -->
+        <div x-show="activeTab === 'iptables'" class="space-y-8">
+            {% set card_border_class = 'border-t-4 border-teal-500' %}
+             {% if services.iptables.active == 'active' %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Current IPTables Rules</h3></div><div class="p-4 sm:p-6 bg-slate-50 border-t"><ul class="space-y-2 text-sm font-mono text-slate-700">{% for detail in services.iptables.details %}<li class="bg-white p-3 rounded-md border border-slate-200 shadow-sm">{{ detail }}</li>{% else %}<li class="italic text-slate-500">No forwarding rules found.</li>{% endfor %}</ul></div></div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow"><form action="/iptables/uninstall" method="post" data-confirm-message="This will flush all rules and remove persistence. Are you sure?" class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 text-center sm:text-left"><div><h4 class="text-lg font-medium text-red-900">Danger Zone</h4><p class="mt-1 text-sm text-red-700">This will flush all rules and remove persistence.</p></div><button type="submit" class="w-full sm:w-auto rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">Uninstall Rules</button></form></div>
+            {% else %}
+               <div class="bg-white shadow-lg rounded-lg overflow-hidden {{ card_border_class }}"><div class="px-4 sm:px-6 py-4"><h3 class="text-lg font-medium">Install IPTables Rules</h3><p class="mt-1 text-sm text-gray-500">Service is not active. Install rules to begin.</p></div><form action="/iptables/install" method="post"><div class="p-4 sm:p-6 bg-slate-50 border-t"><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label for="iptables_install_main_ip" class="block text-sm font-medium text-gray-700">Main Server IP</label><input type="text" id="iptables_install_main_ip" name="main_server_ip" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div><div><label for="iptables_install_ports" class="block text-sm font-medium text-gray-700">Ports (e.g., 80,443)</label><input type="text" id="iptables_install_ports" name="ports" autocomplete="off" class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required></div></div></div><div class="px-4 sm:px-6 py-4 bg-slate-100 text-right"><button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Install Rules</button></div></form></div>
+            {% endif %}
+       </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     const showLoader = () => loadingOverlay.classList.remove('hidden');
-
     document.addEventListener('submit', (event) => {
         const form = event.target;
         if (form.tagName.toLowerCase() !== 'form') return;
-
         const confirmMessage = form.dataset.confirmMessage;
         if (confirmMessage) {
             event.preventDefault();
             Swal.fire({
-                title: 'Are you sure?',
-                text: confirmMessage,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, proceed!',
-                customClass: { popup: 'rounded-lg' }
+                title: 'Are you sure?', text: confirmMessage, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6b7280', confirmButtonText: 'Yes, proceed!', customClass: { popup: 'rounded-lg' }
             }).then((result) => {
-                if (result.isConfirmed) {
-                    showLoader();
-                    form.submit();
-                }
+                if (result.isConfirmed) { showLoader(); form.submit(); }
             });
-        } else {
-            showLoader();
-        }
+        } else { showLoader(); }
     });
 });
 </script>
-
-</body>
-</html>
+{% endblock %}

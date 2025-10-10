@@ -47,7 +47,6 @@ async def _handle_form_action(request, redirect_url='/configure'):
     
     message_type = 'success' if return_code == 0 else 'error'
     
-    # Store the message in the session
     session['flash'] = {'type': message_type, 'message': output}
     
     raise web.HTTPFound(redirect_url)
@@ -58,7 +57,7 @@ async def _handle_form_action(request, redirect_url='/configure'):
 async def dashboard(request):
     """Renders the main dashboard page."""
     status_data = status_module.get_all_services_status()
-    return {'services': status_data}
+    return {'services': status_data, 'request': request}
 
 @routes.get('/configure')
 @aiohttp_jinja2.template('configure.html')
@@ -66,7 +65,6 @@ async def configure_page(request):
     """Renders the configuration page, passing status data and any flash messages from the session."""
     session = await get_session(request)
     
-    # Retrieve and clear the flash message from the session
     flash_message = session.pop('flash', None)
     
     status_data = status_module.get_all_services_status()
@@ -80,7 +78,8 @@ async def configure_page(request):
     return {
         'flash': flash_message,
         'services': status_data,
-        'removable_items': removable_items
+        'removable_items': removable_items,
+        'request': request
     }
 
 # --- Action Routes (POST) ---
