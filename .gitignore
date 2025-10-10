@@ -46,5 +46,5 @@ Thumbs.db
 *.log
 
 # Config files with sensitive data
-config/*.json
-!config/config.json.example
+# config/*.json
+# !config/config.json.example
