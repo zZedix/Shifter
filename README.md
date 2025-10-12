@@ -1,100 +1,93 @@
 # Shifter
 
-Network tunnel management tool supporting GOST, HAProxy, Xray, and IPTables.
+Shifter is a production-ready toolkit for provisioning and operating secure network tunnels on Linux hosts.  
+It combines a `click`-powered command-line interface with an AIOHTTP web dashboard so administrators can manage GOST, HAProxy, Xray, and IPTables configurations from a single, auditable workflow.
+
+## Highlights
+- **Unified control plane** for installing, inspecting, and removing tunnelling services.
+- **First-class CLI** with colorful status output and command groups per service.
+- **Web dashboard** served by `aiohttp` + `aiohttp-jinja2`, including session-based flash messaging.
+- **Packaged configuration templates** for reproducible deployments without network fetches.
+- **PyPI-friendly packaging** with entry points, documentation, and release automation guidance.
 
 ## Requirements
-
-- Root/sudo privileges
-- Python 3.10+
+- Linux host with `systemd` and `iptables`.
+- Python **3.9 or newer** (CPython).
+- Root/sudo privileges for any command that touches system services or firewall rules.
 
 ## Installation
 
+### Stable release (recommended)
 ```bash
-git clone https://github.com/ReturnFI/Shifter
-cd shifter
-python -m pip install .
+python -m pip install shifter
 ```
 
-## Usage
-
-All commands require sudo.
-
-### Web UI
-
+### From a local clone
 ```bash
-sudo shifter serve --host 0.0.0.0 --port 2063
-```
-
-### Status
-
-```bash
-sudo shifter status [gost|haproxy|xray|iptables]
-```
-
-### GOST
-
-```bash
-sudo shifter gost install --domain example.com --port 8080
-sudo shifter gost add --domain example.com --port 8081
-sudo shifter gost remove --port 8081
-sudo shifter gost status
-sudo shifter gost uninstall
-```
-
-### HAProxy
-
-```bash
-sudo shifter haproxy install --relay-port 8080 --main-server-ip 1.2.3.4 --main-server-port 443
-sudo shifter haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 80
-sudo shifter haproxy remove --frontend-name frontend_8081
-sudo shifter haproxy status
-sudo shifter haproxy uninstall
-```
-
-### Xray
-
-```bash
-sudo shifter xray install --address example.com --port 443
-sudo shifter xray add --address example.com --port 80
-sudo shifter xray remove --port 80
-sudo shifter xray status
-sudo shifter xray uninstall
-```
-
-### IPTables
-
-```bash
-sudo shifter iptables install --main-server-ip 1.2.3.4 --ports 80,443
-sudo shifter iptables status
-sudo shifter iptables uninstall
-```
-
-## Project Structure
-
-```
-shifter/
-├── cli.py                  # CLI entry point
-├── scripts/                # Service management modules
-│   ├── gost.py            # GOST tunnel management
-│   ├── haproxy.py         # HAProxy tunnel management
-│   ├── xray.py            # Xray tunnel management
-│   ├── iptables.py        # IPTables rules management
-│   ├── status.py          # Service status checker
-│   ├── system_info.py     # System information utilities
-│   └── config.py          # Configuration handler
-├── web/                    # Web UI
-│   ├── app.py             # AIOHTTP application
-│   ├── routes.py          # API routes
-│   └── templates/         # HTML templates
-├── config/                 # Service configuration templates
-│   ├── gost.service
-│   └── haproxy.cfg
-├── pyproject.toml         # Package configuration
-└── requirements.txt       # Python dependencies
-```
-
-## Development
-
-```bash
+git clone https://github.com/zZedix/Shifter.git
+cd Shifter
+python -m pip install --upgrade pip
 python -m pip install -e .
 ```
+
+The editable install keeps the CLI and web assets in sync while you iterate on the project.
+
+## Quick Start
+```bash
+# Review available commands
+sudo shifter --help
+
+# Launch the web dashboard (http://127.0.0.1:2063 by default)
+sudo shifter serve --host 0.0.0.0 --port 2063
+
+# Inspect the health of all managed services
+sudo shifter status
+```
+
+Each sub-command validates that it is executed with root privileges before touching the system.
+
+## Command Reference
+
+| Group | Example | Description |
+| --- | --- | --- |
+| `serve` | `sudo shifter serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard. |
+| `status` | `sudo shifter status haproxy` | Show active/enabled state plus parsed configuration details. |
+| `gost` | `sudo shifter gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules. |
+| `haproxy` | `sudo shifter haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 443` | Configure HAProxy frontends/backends. |
+| `xray` | `sudo shifter xray add --address example.com --port 8443` | Maintain Xray Dokodemo-door inbounds. |
+| `iptables` | `sudo shifter iptables install --main-server-ip 203.0.113.10 --ports 80,443` | Persist and inspect port-forwarding firewall rules. |
+
+Run `sudo shifter <group> --help` for all arguments on a specific command family.
+
+## Web Dashboard
+Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.  
+Templates live inside the package (`shifter/web/templates`) so deployments do not rely on external assets.  
+Sessions are backed by encrypted cookies; set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts.
+
+## Packaged Templates
+Installer commands render configuration templates that are bundled with the package:
+- `gost.service` for systemd.
+- `haproxy.cfg` with placeholder tokens.
+- `config.json` base configuration for Xray.
+
+Use `importlib.resources` helpers in `shifter.services.config` if you need custom automation that reuses these bundled files.
+
+## Development
+```bash
+# Install runtime dependencies
+python -m pip install -r requirements.txt
+
+# Install the project in editable mode
+python -m pip install -e .
+
+# Optional: run the CLI locally
+sudo python -m shifter status
+```
+
+We recommend developing inside a virtual environment to isolate dependencies.
+
+## Documentation
+Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
+
+## License
+Shifter is released under the [MIT License](LICENSE).
