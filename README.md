@@ -54,7 +54,6 @@ pip install -e .
 ## ⚡ Quick Start
 
 ```bash
-<<<<<<< HEAD
 # 📋 Review available commands
 sudo shifter-toolkit --help
 
@@ -62,7 +61,7 @@ sudo shifter-toolkit --help
 sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
 # 🔍 Inspect the health of all managed services
-=======
+
 # Review available commands
 sudo shifter-toolkit --help
 
@@ -70,7 +69,6 @@ sudo shifter-toolkit --help
 sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
 # Inspect the health of all managed services
->>>>>>> c11714f26ecb9c71bff0eb8c025a8e62b227b09c
 sudo shifter-toolkit status
 ```
 
