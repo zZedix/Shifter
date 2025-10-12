@@ -46,7 +46,8 @@ def install_haproxy(relay_port, main_server_ip, main_server_port):
         content = content.replace("$port", str(main_server_port))
         with open(HAPROXY_CONFIG_PATH, 'w') as f:
             f.write(content)
-        _run_command(["sudo", "systemctl", "enable", "--now", "haproxy"])
+        _run_command(["sudo", "systemctl", "enable", "haproxy"])
+        _run_command(["sudo", "systemctl", "restart", "haproxy"])
         if is_haproxy_active():
             print("HAProxy tunnel is installed and active.")
         else:
