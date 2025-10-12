@@ -98,7 +98,7 @@ We recommend developing inside a virtual environment to isolate dependencies.
 
 ## 📖 Documentation
 
-Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
+Extended guides are available under [`docs/`](docs/), covering deployment patterns, CLI details, and release workflows.
 
 ## 📄 License
 
