@@ -1,4 +1,4 @@
-# Shifter Toolkit
+# 🚀 Shifter Toolkit
 
 [![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](https://pypi.org/project/shifter-toolkit/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
@@ -6,53 +6,53 @@
 
 A production-ready toolkit for provisioning and operating secure network tunnels on Linux hosts.
 
-## Features
+## ✨ Features
 
-- **Unified Control Plane** - Install, inspect, and remove tunnelling services
-- **CLI Interface** - Colorful status output and command groups per service  
-- **Web Dashboard** - AIOHTTP + Jinja2 powered dashboard
-- **Packaged Templates** - Reproducible deployments without network fetches
-- **PyPI Ready** - Complete packaging with entry points and documentation
+- 🎯 **Unified Control Plane** - Install, inspect, and remove tunnelling services
+- 💻 **CLI Interface** - Colorful status output and command groups per service  
+- 🌐 **Web Dashboard** - AIOHTTP + Jinja2 powered dashboard
+- 📦 **Packaged Templates** - Reproducible deployments without network fetches
+- 📚 **PyPI Ready** - Complete packaging with entry points and documentation
 
-## Requirements
+## 📋 Requirements
 
-- Linux host with `systemd` and `iptables`
-- Python 3.9+ (CPython recommended)
-- Root/sudo privileges for system services and firewall rules
+- 🐧 Linux host with `systemd` and `iptables`
+- 🐍 Python 3.9+ (CPython recommended)
+- 🔐 Root/sudo privileges for system services and firewall rules
 
-## Installation
+## 🚀 Installation
 
-### Stable Release
+### 📦 Stable Release
 ```bash
 pip install shifter-toolkit
 ```
 
-### From Source
+### 🔧 From Source
 ```bash
 git clone https://github.com/zZedix/Shifter.git
 cd Shifter
 pip install -e .
 ```
 
-## Quick Start
+## ⚡ Quick Start
 
 ```bash
-# Review available commands
+# 📋 Review available commands
 sudo shifter-toolkit --help
 
-# Launch the web dashboard (http://127.0.0.1:2063 by default)
+# 🌐 Launch the web dashboard (http://127.0.0.1:2063 by default)
 sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
-# Inspect the health of all managed services
+# 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
 ```
 
-> **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
+> ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
 
-## Command Reference
+## 📚 Command Reference
 
-| Group | Example | Description |
-|-------|---------|-------------|
+| 🎯 Group | 💻 Example | 📝 Description |
+|----------|------------|----------------|
 | `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard |
 | `status` | `sudo shifter-toolkit status haproxy` | Show active/enabled state plus parsed configuration details |
 | `gost` | `sudo shifter-toolkit gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules |
@@ -62,44 +62,44 @@ sudo shifter-toolkit status
 
 Run `sudo shifter-toolkit <group> --help` for all arguments on a specific command family.
 
-## Web Dashboard
+## 🌐 Web Dashboard
 
 Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.
 
-- Templates live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
-- Sessions are backed by encrypted cookies
-- Set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts
+- 📁 Templates live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
+- 🔐 Sessions are backed by encrypted cookies
+- 🔑 Set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts
 
-## Packaged Templates
+## 📦 Packaged Templates
 
 Installer commands render configuration templates that are bundled with the package:
 
-- `gost.service` for systemd
-- `haproxy.cfg` with placeholder tokens  
-- `config.json` base configuration for Xray
+- 🔧 `gost.service` for systemd
+- ⚙️ `haproxy.cfg` with placeholder tokens  
+- 📄 `config.json` base configuration for Xray
 
 Use `importlib.resources` helpers in `shifter.services.config` if you need custom automation that reuses these bundled files.
 
-## Development
+## 🛠️ Development
 
 ```bash
-# Install runtime dependencies
+# 📦 Install runtime dependencies
 pip install -r requirements.txt
 
-# Install the project in editable mode
+# 🔧 Install the project in editable mode
 pip install -e .
 
-# Optional: run the CLI locally
+# 🚀 Optional: run the CLI locally
 sudo python -m shifter status
 ```
 
 We recommend developing inside a virtual environment to isolate dependencies.
 
-## Documentation
+## 📖 Documentation
 
 Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
 
-## License
+## 📄 License
 
 Shifter Toolkit is released under the [MIT License](LICENSE).
 
