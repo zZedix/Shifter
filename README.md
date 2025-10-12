@@ -54,6 +54,7 @@ pip install -e .
 ## ⚡ Quick Start
 
 ```bash
+<<<<<<< HEAD
 # 📋 Review available commands
 sudo shifter-toolkit --help
 
@@ -61,6 +62,15 @@ sudo shifter-toolkit --help
 sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
 # 🔍 Inspect the health of all managed services
+=======
+# Review available commands
+sudo shifter-toolkit --help
+
+# Launch the web dashboard (http://127.0.0.1:2063 by default)
+sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
+
+# Inspect the health of all managed services
+>>>>>>> c11714f26ecb9c71bff0eb8c025a8e62b227b09c
 sudo shifter-toolkit status
 ```
 
@@ -68,6 +78,7 @@ sudo shifter-toolkit status
 
 ## 📚 Command Reference
 
+<<<<<<< HEAD
 | 🎯 Group | 💻 Example | 📝 Description |
 |----------|------------|----------------|
 | `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard |
@@ -78,6 +89,18 @@ sudo shifter-toolkit status
 | `iptables` | `sudo shifter-toolkit iptables install --main-server-ip 203.0.113.10 --ports 80,443` | Persist and inspect port-forwarding firewall rules |
 
 > 💡 **Pro Tip**: Run `sudo shifter-toolkit <group> --help` for all arguments on a specific command family.
+=======
+| Group | Example | Description |
+| --- | --- | --- |
+| `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard. |
+| `status` | `sudo shifter-toolkit status haproxy` | Show active/enabled state plus parsed configuration details. |
+| `gost` | `sudo shifter-toolkit gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules. |
+| `haproxy` | `sudo shifter-toolkit haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 443` | Configure HAProxy frontends/backends. |
+| `xray` | `sudo shifter-toolkit xray add --address example.com --port 8443` | Maintain Xray Dokodemo-door inbounds. |
+| `iptables` | `sudo shifter-toolkit iptables install --main-server-ip 203.0.113.10 --ports 80,443` | Persist and inspect port-forwarding firewall rules. |
+
+Run `sudo shifter-toolkit <group> --help` for all arguments on a specific command family.
+>>>>>>> c11714f26ecb9c71bff0eb8c025a8e62b227b09c
 
 ## 🌐 Web Dashboard
 
