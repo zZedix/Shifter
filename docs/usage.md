@@ -9,61 +9,61 @@ The Shifter CLI is organised into command groups for each supported service. All
 
 ## Global Commands
 ```bash
-sudo shifter --help          # top-level command groups
-sudo shifter --version       # report package version via importlib.metadata
-sudo shifter status          # aggregate service status overview
-sudo shifter status gost     # restrict status to a single service
+sudo shifter-toolkit --help          # top-level command groups
+sudo shifter-toolkit --version       # report package version via importlib.metadata
+sudo shifter-toolkit status          # aggregate service status overview
+sudo shifter-toolkit status gost     # restrict status to a single service
 ```
 
 ## GOST Command Group
 ```bash
 # Install and configure a primary forwarding rule
-sudo shifter gost install --domain example.com --port 8080
+sudo shifter-toolkit gost install --domain example.com --port 8080
 
 # Add an additional port forward on the existing configuration
-sudo shifter gost add --domain backup.example.com --port 8081
+sudo shifter-toolkit gost add --domain backup.example.com --port 8081
 
 # List configured rules (also part of `status`)
-sudo shifter gost status
+sudo shifter-toolkit gost status
 
 # Remove a specific rule
-sudo shifter gost remove --port 8081
+sudo shifter-toolkit gost remove --port 8081
 
 # Stop and remove all GOST assets and systemd units
-sudo shifter gost uninstall
+sudo shifter-toolkit gost uninstall
 ```
 
 ## HAProxy Command Group
 ```bash
-sudo shifter haproxy install \
+sudo shifter-toolkit haproxy install \
   --relay-port 8080 \
   --main-server-ip 203.0.113.10 \
   --main-server-port 443
 
-sudo shifter haproxy add \
+sudo shifter-toolkit haproxy add \
   --relay-port 8081 \
   --main-server-ip 203.0.113.20 \
   --main-server-port 80
 
-sudo shifter haproxy remove --frontend-name tunnel-8081
-sudo shifter haproxy status
-sudo shifter haproxy uninstall
+sudo shifter-toolkit haproxy remove --frontend-name tunnel-8081
+sudo shifter-toolkit haproxy status
+sudo shifter-toolkit haproxy uninstall
 ```
 
 ## Xray Command Group
 ```bash
-sudo shifter xray install --address example.com --port 443
-sudo shifter xray add --address example.com --port 8443
-sudo shifter xray remove --port 8443
-sudo shifter xray status
-sudo shifter xray uninstall
+sudo shifter-toolkit xray install --address example.com --port 443
+sudo shifter-toolkit xray add --address example.com --port 8443
+sudo shifter-toolkit xray remove --port 8443
+sudo shifter-toolkit xray status
+sudo shifter-toolkit xray uninstall
 ```
 
 ## IPTables Command Group
 ```bash
-sudo shifter iptables install --main-server-ip 203.0.113.10 --ports 80,443
-sudo shifter iptables status
-sudo shifter iptables uninstall
+sudo shifter-toolkit iptables install --main-server-ip 203.0.113.10 --ports 80,443
+sudo shifter-toolkit iptables status
+sudo shifter-toolkit iptables uninstall
 ```
 
 ## Exit Codes
