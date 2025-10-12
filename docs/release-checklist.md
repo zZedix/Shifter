@@ -15,13 +15,13 @@ Publishing Shifter to PyPI should follow a predictable, repeatable process. Use 
 
 ## 3. Smoke Test the Wheels
 - [ ] Create a temporary virtual environment.
-- [ ] Install the freshly built wheel: `python -m pip install dist/shifter-<version>-py3-none-any.whl`.
-- [ ] Execute `shifter --help` and `python -m shifter status` (mocked if run on a non-Linux host).
+- [ ] Install the freshly built wheel: `python -m pip install dist/shifter_toolkit-<version>-py3-none-any.whl`.
+- [ ] Execute `shifter-toolkit --help` and `python -m shifter status` (mocked if run on a non-Linux host).
 - [ ] Verify that the web UI launches: `python -m shifter serve --help`.
 
 ## 4. Publish
 - [ ] Upload packages with `twine upload dist/*`.
-- [ ] Confirm the new version appears on [PyPI](https://pypi.org/project/shifter/).
+- [ ] Confirm the new version appears on [PyPI](https://pypi.org/project/shifter-toolkit/).
 - [ ] Tag the release in version control (`git tag vX.Y.Z && git push origin vX.Y.Z`).
 
 ## 5. Post-Release
