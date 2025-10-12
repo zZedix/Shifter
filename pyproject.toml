@@ -3,13 +3,14 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Shifter"
+name = "shifter"
 version = "0.1.0"
 description = "CLI toolkit for managing network tunnels and services with a web UI"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
-authors = [{ name = "ReturnFI" }]
+authors = [{ name = "zZedix" }]
+keywords = ["networking", "tunneling", "cli", "aiohttp", "automation"]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
@@ -18,21 +19,35 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
     "Framework :: AIOHTTP",
-    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Environment :: Console",
 ]
 dependencies = [
-    "requests>=2.25",
-    "click>=8.0",
     "aiohttp>=3.8",
+    "aiohttp-session[secure]>=2.11",
     "aiohttp_jinja2>=1.5",
+    "click>=8.0",
     "jinja2>=3.0",
-    "aiohttp-session[secure]>=2.11"
+    "requests>=2.25",
 ]
 
+[project.urls]
+Homepage = "https://github.com/zZedix/Shifter"
+Documentation = "https://github.com/zZedix/Shifter#readme"
+Source = "https://github.com/zZedix/Shifter"
+Issues = "https://github.com/zZedix/Shifter/issues"
+
 [project.scripts]
-shifter = "cli:cli"
+shifter = "shifter.cli:cli"
 
 [tool.setuptools]
-py-modules = ["cli"]
-packages = ["scripts", "web"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["shifter*"]
+
+[tool.setuptools.package-data]
+"shifter.web" = ["templates/*.html"]
+"shifter.data" = ["*.json", "*.cfg", "*.service"]
