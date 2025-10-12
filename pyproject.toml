@@ -3,7 +3,7 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "shifter"
+name = "shifter-toolkit"
 version = "0.1.0"
 description = "CLI toolkit for managing network tunnels and services with a web UI"
 readme = "README.md"
@@ -20,7 +20,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Topic :: System :: Networking",
     "Topic :: System :: Systems Administration",
-    "Framework :: AIOHTTP",
     "Environment :: Console",
 ]
 dependencies = [
@@ -39,7 +38,7 @@ Source = "https://github.com/zZedix/Shifter"
 Issues = "https://github.com/zZedix/Shifter/issues"
 
 [project.scripts]
-shifter = "shifter.cli:cli"
+shifter-toolkit = "shifter.cli:cli"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
