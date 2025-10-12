@@ -27,4 +27,4 @@ The toolkit relies on `systemd` to manage long-running services and expects to b
 
 ## Getting Help
 - File issues or feature requests on [GitHub](https://github.com/zZedix/Shifter/issues).
-- Consult `shifter --help` for contextual command information.
+- Consult `shifter-toolkit --help` for contextual command information.
