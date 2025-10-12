@@ -23,7 +23,6 @@ The toolkit relies on `systemd` to manage long-running services and expects to b
 | CLI quick start and examples | [usage.md](usage.md) |
 | Web dashboard configuration | [web-ui.md](web-ui.md) |
 | Service-specific behaviours | [services.md](services.md) |
-| Packaging & release checklist | [release-checklist.md](release-checklist.md) |
 
 ## Getting Help
 - File issues or feature requests on [GitHub](https://github.com/zZedix/Shifter/issues).
