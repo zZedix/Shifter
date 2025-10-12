@@ -19,7 +19,7 @@ It combines a `click`-powered command-line interface with an AIOHTTP web dashboa
 
 ### Stable release (recommended)
 ```bash
-python -m pip install shifter
+python -m pip install shifter-toolkit
 ```
 
 ### From a local clone
