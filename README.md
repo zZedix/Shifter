@@ -22,6 +22,11 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ## 🚀 Installation
 
+### ⚡ One-Line Installer
+```bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
+```
+
 ### 📦 Stable Release
 ```bash
 pip install shifter-toolkit
@@ -98,7 +103,7 @@ We recommend developing inside a virtual environment to isolate dependencies.
 
 ## 📖 Documentation
 
-Extended guides are available under [`docs/`](docs/), covering deployment patterns, CLI details, and release workflows.
+Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
 
 ## 📄 License
 

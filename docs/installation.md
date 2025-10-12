@@ -25,6 +25,11 @@ python -m pip install --upgrade pip
 python -m pip install shifter-toolkit
 ```
 
+## One-Line Installer (systemd deployment)
+```bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
+```
+
 Verify the installation:
 ```bash
 shifter-toolkit --version
