@@ -12,7 +12,6 @@ SERVICE_NAME="shifter-webui"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 SHIFTER_USER="shifter"
 PYTHON_BIN="python3"
-PIP_BIN="pip3"
 
 log() {
     printf '[%s] %s\n' "${SCRIPT_NAME}" "$*"
@@ -153,8 +152,8 @@ User=${SHIFTER_USER}
 Group=${SHIFTER_USER}
 Environment=PATH=${VENV_PATH}/bin
 WorkingDirectory=${INSTALL_PREFIX}
-ExecStart=${VENV_PATH}/bin/shifter webui start --host 0.0.0.0 --port 2063 --daemon
-ExecStop=${VENV_PATH}/bin/shifter webui stop
+ExecStart=${VENV_PATH}/bin/shifter-toolkit webui start --host 0.0.0.0 --port 2063 --daemon
+ExecStop=${VENV_PATH}/bin/shifter-toolkit webui stop
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -221,8 +220,8 @@ Service management:
   sudo systemctl stop shifter-webui
 
 CLI management:
-  sudo /opt/shifter/venv/bin/shifter webui status
-  sudo /opt/shifter/venv/bin/shifter webui logs
+  sudo /opt/shifter/venv/bin/shifter-toolkit webui status
+  sudo /opt/shifter/venv/bin/shifter-toolkit webui logs
 
 Uninstall instructions:
   sudo systemctl disable --now shifter-webui
@@ -230,11 +229,8 @@ Uninstall instructions:
   sudo systemctl daemon-reload
   sudo rm -rf /opt/shifter
 
+------------------------------------------------------------
 EOF
-
-    echo "One-liner installer:"
-    echo "  curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh | sudo bash"
-    echo "------------------------------------------------------------"
 }
 
 main() {
