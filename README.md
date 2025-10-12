@@ -123,6 +123,10 @@ If you find Shifter Toolkit useful and want to support its development, consider
 
 ---
 
+<div align="center">
+
 **Made with ❤️ by [zZedix](https://github.com/zZedix)**
 
 *Securing the digital world, one line of code at a time!*
+
+</div>
