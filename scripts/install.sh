@@ -1,251 +1,103 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ------------------------------------------------------------
-# Shifter Toolkit installer
-# ------------------------------------------------------------
-
-SCRIPT_NAME="Shifter Toolkit installer"
-INSTALL_PREFIX="/opt/shifter"
-VENV_PATH="${INSTALL_PREFIX}/venv"
-SERVICE_NAME="shifter-webui"
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-SHIFTER_USER="shifter"
-PYTHON_BIN="python3"
+REPO_URL="https://github.com/zZedix/Shifter.git"
+TARGET_DIR="${TARGET_DIR:-$HOME/Shifter}"
+PID_FILE="${TARGET_DIR}/shifter-webui.pid"
+LOG_FILE="${TARGET_DIR}/shifter-webui.log"
 
 log() {
-    printf '[%s] %s\n' "${SCRIPT_NAME}" "$*"
+    printf '[Shifter Toolkit installer] %s\n' "$*"
 }
 
-error() {
-    printf '[%s] ERROR: %s\n' "${SCRIPT_NAME}" "$*" >&2
-}
-
-require_root() {
-    if [[ "$(id -u)" -ne 0 ]]; then
-        error "This installer must be run as root. Example: sudo bash ${0}"
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        log "Missing dependency: $1"
+        log "Please install '$1' with your package manager and re-run this script."
         exit 1
     fi
 }
 
-detect_distro() {
-    if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        DISTRO_ID="${ID:-unknown}"
-        DISTRO_LIKE="${ID_LIKE:-}"
-    else
-        error "Unable to detect distribution. /etc/os-release missing."
-        exit 1
-    fi
-}
+require_command git
+require_command python3
+require_command pip3
 
-install_packages_debian() {
-    apt-get update -y
-    apt-get install -y python3 python3-venv python3-pip python3-dev build-essential \
-        systemd openssl curl git
-}
+if [[ -d "${TARGET_DIR}/.git" ]]; then
+    log "Repository already present at ${TARGET_DIR}. Pulling latest changes..."
+    git -C "${TARGET_DIR}" pull --ff-only
+else
+    log "Cloning Shifter Toolkit into ${TARGET_DIR}..."
+    git clone "${REPO_URL}" "${TARGET_DIR}"
+fi
 
-install_packages_centos() {
-    local pkg_mgr="yum"
-    if command -v dnf >/dev/null 2>&1; then
-        pkg_mgr="dnf"
-    fi
-    ${pkg_mgr} install -y python3 python3-virtualenv python3-pip python3-devel gcc \
-        systemd openssl curl git
-}
+log "Installing Python dependencies..."
+python3 -m pip install --upgrade pip setuptools wheel
 
-install_packages_arch() {
-    pacman -Sy --noconfirm python python-pip python-virtualenv base-devel \
-        systemd openssl curl git
-}
+log "Installing Shifter Toolkit in editable mode..."
+python3 -m pip install -e "${TARGET_DIR}"
 
-install_dependencies() {
-    log "Installing system dependencies..."
-    case "${DISTRO_ID}" in
-        ubuntu|debian)
-            install_packages_debian
-            ;;
-        centos|rhel|rocky|almalinux|fedora)
-            install_packages_centos
-            ;;
-        arch|manjaro)
-            install_packages_arch
-            ;;
-        *)
-            if [[ "${DISTRO_LIKE}" == *"debian"* ]]; then
-                install_packages_debian
-            elif [[ "${DISTRO_LIKE}" == *"rhel"* || "${DISTRO_LIKE}" == *"fedora"* ]]; then
-                install_packages_centos
-            else
-                error "Unsupported distribution: ${DISTRO_ID}. Install dependencies manually and re-run."
-                exit 1
-            fi
-            ;;
-    esac
-}
-
-ensure_user() {
-    if ! id "${SHIFTER_USER}" >/dev/null 2>&1; then
-        log "Creating system user '${SHIFTER_USER}'..."
-        useradd --system --create-home --home-dir "/var/lib/${SHIFTER_USER}" \
-            --shell /usr/sbin/nologin "${SHIFTER_USER}"
-    else
-        log "User '${SHIFTER_USER}' already exists. Skipping."
-    fi
-}
-
-create_directories() {
-    log "Creating directories..."
-    install -d -o "${SHIFTER_USER}" -g "${SHIFTER_USER}" "${INSTALL_PREFIX}"
-    install -d -o "${SHIFTER_USER}" -g "${SHIFTER_USER}" /var/log/shifter
-    install -d -o "${SHIFTER_USER}" -g "${SHIFTER_USER}" /run/shifter
-    local user_home
-    user_home="$(su -s /bin/sh - "${SHIFTER_USER}" -c 'printf %s "$HOME"' 2>/dev/null || true)"
-    if [[ -n "${user_home}" ]]; then
-        install -d -o "${SHIFTER_USER}" -g "${SHIFTER_USER}" "${user_home}/.local/share/shifter/certs"
-        install -d -o "${SHIFTER_USER}" -g "${SHIFTER_USER}" "${user_home}/.local/state/shifter"
-    fi
-}
-
-create_virtualenv() {
-    if [[ ! -d "${VENV_PATH}" ]]; then
-        log "Creating virtual environment at ${VENV_PATH}..."
-        "${PYTHON_BIN}" -m venv "${VENV_PATH}"
-    else
-        log "Virtual environment already exists. Skipping creation."
-    fi
-    source "${VENV_PATH}/bin/activate"
-    pip install --upgrade pip wheel setuptools
-}
-
-install_shifter() {
-    source "${VENV_PATH}/bin/activate"
-    local script_source="${BASH_SOURCE[0]:-}"
-    local script_dir
-    if [[ -n "${script_source}" && "${script_source}" != "${0}" ]]; then
-        script_dir="$(dirname "$(readlink -f "${script_source}")")"
-    else
-        script_dir="$(pwd)"
-    fi
-    local repo_root="${script_dir}/.."
-    if [[ -f "${repo_root}/pyproject.toml" && -d "${repo_root}/src/shifter" ]]; then
-        log "Detected local repository at ${repo_root}. Installing in editable mode..."
-        pip install --upgrade pip wheel setuptools
-        pip install --upgrade -e "${repo_root}"
-    else
-        log "Installing Shifter Toolkit from GitHub..."
-        pip install --upgrade "git+https://github.com/zZedix/Shifter.git"
-    fi
-}
-
-write_systemd_unit() {
-    log "Writing systemd unit to ${SERVICE_FILE}..."
-    cat > "${SERVICE_FILE}" <<EOF
-[Unit]
-Description=Shifter WebUI Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=${SHIFTER_USER}
-Group=${SHIFTER_USER}
-Environment=PATH=${VENV_PATH}/bin
-WorkingDirectory=${INSTALL_PREFIX}
-ExecStart=${VENV_PATH}/bin/shifter-toolkit webui start --host 0.0.0.0 --port 2063 --daemon
-ExecStop=${VENV_PATH}/bin/shifter-toolkit webui stop
-Restart=on-failure
-RestartSec=5s
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    systemctl daemon-reload
-}
-
-configure_firewall() {
-    log "Configuring firewall rules for TCP 2063 (if applicable)..."
-    if command -v ufw >/dev/null 2>&1; then
-        if ! ufw status | grep -q "2063"; then
-            ufw allow 2063/tcp || true
+cleanup_stale_pid() {
+    if [[ -f "${PID_FILE}" ]]; then
+        local old_pid
+        old_pid="$(cat "${PID_FILE}" 2>/dev/null || true)"
+        if [[ -n "${old_pid}" ]] && ! kill -0 "${old_pid}" 2>/dev/null; then
+            rm -f "${PID_FILE}"
         fi
     fi
-    if command -v firewall-cmd >/dev/null 2>&1; then
-        firewall-cmd --add-port=2063/tcp --permanent || true
-        firewall-cmd --reload || true
-    fi
 }
 
-set_permissions() {
-    chown -R "${SHIFTER_USER}:${SHIFTER_USER}" "${INSTALL_PREFIX}"
-    chown -R "${SHIFTER_USER}:${SHIFTER_USER}" /var/log/shifter
-    chown -R "${SHIFTER_USER}:${SHIFTER_USER}" /run/shifter
-}
-
-start_service() {
-    log "Starting ${SERVICE_NAME} service..."
-    systemctl enable --now "${SERVICE_NAME}"
-}
-
-print_summary() {
-    local shifter_home
-    shifter_home="$(su -s /bin/sh - "${SHIFTER_USER}" -c 'printf %s "$HOME"' 2>/dev/null || echo "/var/lib/${SHIFTER_USER}")"
-    local cert_path="${shifter_home}/.local/share/shifter/certs"
-    local https_hint=""
-    if [[ -d "${cert_path}" ]] && compgen -G "${cert_path}/*.crt" >/dev/null 2>&1; then
-        https_hint="https://$(hostname -f 2>/dev/null || echo localhost):2063"
+start_daemon() {
+    if ! command -v shifter-toolkit >/dev/null 2>&1; then
+        log "Cannot locate 'shifter-toolkit' in PATH. Skipping background start."
+        return 1
     fi
 
-    cat <<EOF
-------------------------------------------------------------
-Shifter Toolkit WebUI installation complete!
+    cleanup_stale_pid
 
-Web UI available at:
-  - HTTP : http://$(hostname -f 2>/dev/null || echo localhost):2063
-EOF
+    if [[ -f "${PID_FILE}" ]]; then
+        local running_pid
+        running_pid="$(cat "${PID_FILE}")"
+        if kill -0 "${running_pid}" 2>/dev/null; then
+            log "WebUI already running (PID ${running_pid}). Logs: ${LOG_FILE}"
+            return 0
+        fi
+    fi
 
-    if [[ -n "${https_hint}" ]]; then
-        printf "  - HTTPS: %s\n" "${https_hint}"
+    log "Starting WebUI daemon (logs: ${LOG_FILE})..."
+    nohup shifter-toolkit serve --host 0.0.0.0 --port 2063 >"${LOG_FILE}" 2>&1 &
+    local new_pid=$!
+    sleep 1
+    if kill -0 "${new_pid}" 2>/dev/null; then
+        echo "${new_pid}" > "${PID_FILE}"
+        log "WebUI started in background with PID ${new_pid}."
     else
-        printf "  - HTTPS: self-signed certificate generated on first run (if --https used)\n"
+        log "Failed to start WebUI daemon. Check ${LOG_FILE} for details."
+        return 1
     fi
+}
 
-    cat <<'EOF'
+if [[ "$(id -u)" -eq 0 ]]; then
+    start_daemon || true
+else
+    log "Run this script with sudo/root if you want the WebUI to start as a daemon automatically."
+    log "You can manually launch it with:"
+    echo "  sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 &> ${LOG_FILE} &"
+fi
 
-Service management:
-  sudo systemctl status shifter-webui
-  sudo systemctl restart shifter-webui
-  sudo systemctl stop shifter-webui
+cat <<EOF
 
-CLI management:
-  sudo /opt/shifter/venv/bin/shifter-toolkit webui status
-  sudo /opt/shifter/venv/bin/shifter-toolkit webui logs
+Installation complete!
 
-Uninstall instructions:
-  sudo systemctl disable --now shifter-webui
-  sudo rm -f /etc/systemd/system/shifter-webui.service
-  sudo systemctl daemon-reload
-  sudo rm -rf /opt/shifter
+To run the Web UI manually:
+  sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
-------------------------------------------------------------
+To open the CLI help:
+  shifter-toolkit --help
+
+Background service PID file:
+  ${PID_FILE}
+Log file:
+  ${LOG_FILE}
+
+Project directory: ${TARGET_DIR}
 EOF
-}
-
-main() {
-    require_root
-    detect_distro
-    install_dependencies
-    ensure_user
-    create_directories
-    create_virtualenv
-    install_shifter
-    set_permissions
-    write_systemd_unit
-    configure_firewall
-    start_service
-    print_summary
-}
-
-main "$@"
