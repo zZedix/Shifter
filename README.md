@@ -1,93 +1,138 @@
-# Shifter
+# 🚀 Shifter Toolkit
 
-Shifter is a production-ready toolkit for provisioning and operating secure network tunnels on Linux hosts.  
-It combines a `click`-powered command-line interface with an AIOHTTP web dashboard so administrators can manage GOST, HAProxy, Xray, and IPTables configurations from a single, auditable workflow.
+<div align="center">
 
-## Highlights
-- **Unified control plane** for installing, inspecting, and removing tunnelling services.
-- **First-class CLI** with colorful status output and command groups per service.
-- **Web dashboard** served by `aiohttp` + `aiohttp-jinja2`, including session-based flash messaging.
-- **Packaged configuration templates** for reproducible deployments without network fetches.
-- **PyPI-friendly packaging** with entry points, documentation, and release automation guidance.
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![PyPI](https://img.shields.io/badge/pypi-shifter--toolkit-blue.svg)
 
-## Requirements
-- Linux host with `systemd` and `iptables`.
-- Python **3.9 or newer** (CPython).
-- Root/sudo privileges for any command that touches system services or firewall rules.
+**A production-ready toolkit for provisioning and operating secure network tunnels on Linux hosts**
 
-## Installation
+[![Install](https://img.shields.io/badge/install-pip%20install%20shifter--toolkit-blue)](https://pypi.org/project/shifter-toolkit/)
+[![GitHub](https://img.shields.io/badge/github-zZedix%2FShifter-black)](https://github.com/zZedix/Shifter)
 
-### Stable release (recommended)
+</div>
+
+---
+
+Shifter Toolkit combines a **click-powered** command-line interface with an **AIOHTTP web dashboard** so administrators can manage GOST, HAProxy, Xray, and IPTables configurations from a single, auditable workflow.
+
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Unified Control Plane** | Install, inspect, and remove tunnelling services from one place |
+| 🖥️ **First-class CLI** | Colorful status output and command groups per service |
+| 🌐 **Web Dashboard** | AIOHTTP + Jinja2 powered dashboard with session-based messaging |
+| 📦 **Packaged Templates** | Reproducible deployments without network fetches |
+| 📚 **PyPI Ready** | Complete packaging with entry points and documentation |
+
+## 📋 Requirements
+
+- 🐧 **Linux host** with `systemd` and `iptables`
+- 🐍 **Python 3.9+** (CPython recommended)
+- 🔐 **Root/sudo privileges** for system services and firewall rules
+
+## 🚀 Installation
+
+### 📦 Stable Release (Recommended)
 ```bash
-python -m pip install shifter
+pip install shifter-toolkit
 ```
 
-### From a local clone
+### 🔧 From Source
 ```bash
 git clone https://github.com/zZedix/Shifter.git
 cd Shifter
-python -m pip install --upgrade pip
-python -m pip install -e .
+pip install --upgrade pip
+pip install -e .
 ```
 
-The editable install keeps the CLI and web assets in sync while you iterate on the project.
+> 💡 **Tip**: The editable install keeps the CLI and web assets in sync while you iterate on the project.
 
-## Quick Start
+## ⚡ Quick Start
+
 ```bash
-# Review available commands
-sudo shifter --help
+# 📋 Review available commands
+sudo shifter-toolkit --help
 
-# Launch the web dashboard (http://127.0.0.1:2063 by default)
-sudo shifter serve --host 0.0.0.0 --port 2063
+# 🌐 Launch the web dashboard (http://127.0.0.1:2063 by default)
+sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
 
-# Inspect the health of all managed services
-sudo shifter status
+# 🔍 Inspect the health of all managed services
+sudo shifter-toolkit status
 ```
 
-Each sub-command validates that it is executed with root privileges before touching the system.
+> ⚠️ **Security Note**: Each sub-command validates that it is executed with root privileges before touching the system.
 
-## Command Reference
+## 📚 Command Reference
 
-| Group | Example | Description |
-| --- | --- | --- |
-| `serve` | `sudo shifter serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard. |
-| `status` | `sudo shifter status haproxy` | Show active/enabled state plus parsed configuration details. |
-| `gost` | `sudo shifter gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules. |
-| `haproxy` | `sudo shifter haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 443` | Configure HAProxy frontends/backends. |
-| `xray` | `sudo shifter xray add --address example.com --port 8443` | Maintain Xray Dokodemo-door inbounds. |
-| `iptables` | `sudo shifter iptables install --main-server-ip 203.0.113.10 --ports 80,443` | Persist and inspect port-forwarding firewall rules. |
+| 🎯 Group | 💻 Example | 📝 Description |
+|----------|------------|----------------|
+| `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard |
+| `status` | `sudo shifter-toolkit status haproxy` | Show active/enabled state plus parsed configuration details |
+| `gost` | `sudo shifter-toolkit gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules |
+| `haproxy` | `sudo shifter-toolkit haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 443` | Configure HAProxy frontends/backends |
+| `xray` | `sudo shifter-toolkit xray add --address example.com --port 8443` | Maintain Xray Dokodemo-door inbounds |
+| `iptables` | `sudo shifter-toolkit iptables install --main-server-ip 203.0.113.10 --ports 80,443` | Persist and inspect port-forwarding firewall rules |
 
-Run `sudo shifter <group> --help` for all arguments on a specific command family.
+> 💡 **Pro Tip**: Run `sudo shifter-toolkit <group> --help` for all arguments on a specific command family.
 
-## Web Dashboard
-Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.  
-Templates live inside the package (`shifter/web/templates`) so deployments do not rely on external assets.  
-Sessions are backed by encrypted cookies; set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts.
+## 🌐 Web Dashboard
 
-## Packaged Templates
-Installer commands render configuration templates that are bundled with the package:
-- `gost.service` for systemd.
-- `haproxy.cfg` with placeholder tokens.
-- `config.json` base configuration for Xray.
+Shifter ships with a **lightweight dashboard** that mirrors the CLI capabilities.
 
-Use `importlib.resources` helpers in `shifter.services.config` if you need custom automation that reuses these bundled files.
+- 📁 **Templates** live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
+- 🔐 **Sessions** are backed by encrypted cookies
+- 🔑 **Security**: Set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts
 
-## Development
+## 📦 Packaged Templates
+
+Installer commands render **configuration templates** that are bundled with the package:
+
+- 🔧 `gost.service` for systemd
+- ⚙️ `haproxy.cfg` with placeholder tokens  
+- 📄 `config.json` base configuration for Xray
+
+> 💡 **Developer Note**: Use `importlib.resources` helpers in `shifter.services.config` if you need custom automation that reuses these bundled files.
+
+## 🛠️ Development
+
 ```bash
-# Install runtime dependencies
-python -m pip install -r requirements.txt
+# 📦 Install runtime dependencies
+pip install -r requirements.txt
 
-# Install the project in editable mode
-python -m pip install -e .
+# 🔧 Install the project in editable mode
+pip install -e .
 
-# Optional: run the CLI locally
+# 🚀 Optional: run the CLI locally
 sudo python -m shifter status
 ```
 
-We recommend developing inside a virtual environment to isolate dependencies.
+> 🌟 **Recommendation**: Develop inside a virtual environment to isolate dependencies.
 
-## Documentation
-Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
+## 📖 Documentation
 
-## License
-Shifter is released under the [MIT License](LICENSE).
+Extended guides are available under [`docs/`](docs/index.md), covering:
+
+- 🚀 Deployment patterns
+- 💻 CLI details  
+- 🔄 Release workflows
+
+---
+
+## 📄 License
+
+Shifter Toolkit is released under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [zZedix](https://github.com/zZedix)**
+
+[![PyPI](https://img.shields.io/badge/pypi-shifter--toolkit-blue)](https://pypi.org/project/shifter-toolkit/)
+[![GitHub](https://img.shields.io/badge/github-zZedix%2FShifter-black)](https://github.com/zZedix/Shifter)
+
+</div>
