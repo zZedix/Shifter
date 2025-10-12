@@ -22,12 +22,12 @@ This document covers supported environments, package installation methods, and p
 ## Installing from PyPI
 ```bash
 python -m pip install --upgrade pip
-python -m pip install shifter
+python -m pip install shifter-toolkit
 ```
 
 Verify the installation:
 ```bash
-shifter --version
+shifter-toolkit --version
 python -m shifter --help
 ```
 
@@ -46,7 +46,7 @@ Editable installs expose the package in-place so you can modify the code without
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install shifter
+python -m pip install shifter-toolkit
 ```
 
 Deactivate when finished:
@@ -55,8 +55,8 @@ deactivate
 ```
 
 ## Post-install Checklist
-- `shifter --help` shows the CLI usage information.
-- `shifter status` prompts for sudo if not already run with elevated privileges.
+- `shifter-toolkit --help` shows the CLI usage information.
+- `shifter-toolkit status` prompts for sudo if not already run with elevated privileges.
 - `python -m shifter serve --help` works without errors.
 
 If any command fails due to missing privileges or binaries, re-run with `sudo` or consult [usage.md](usage.md) for additional context.
