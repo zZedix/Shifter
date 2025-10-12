@@ -1,6 +1,6 @@
 # 🚀 Shifter Toolkit
 
-[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](https://pypi.org/project/shifter-toolkit/)
+[![Version](https://img.shields.io/badge/version-0.1.2-blue.svg)](https://pypi.org/project/shifter-toolkit/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -84,10 +84,11 @@ Use `importlib.resources` helpers in `shifter.services.config` if you need custo
 
 ```bash
 # 📦 Install runtime dependencies
-pip install -r requirements.txt
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
 
 # 🔧 Install the project in editable mode
-pip install -e .
+python -m pip install -e .
 
 # 🚀 Optional: run the CLI locally
 sudo python -m shifter status
