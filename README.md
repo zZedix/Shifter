@@ -27,11 +27,6 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
 ```
 
-### 📦 Stable Release
-```bash
-pip install shifter-toolkit
-```
-
 ### 🔧 From Source
 ```bash
 git clone https://github.com/zZedix/Shifter.git
