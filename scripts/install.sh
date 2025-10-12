@@ -66,7 +66,53 @@ require_command() {
 
 require_command git git git git
 require_command python3 python3 python3 python
-require_command pip3 python3-pip python3-pip python-pip
+
+ensure_pip() {
+    if python3 -m pip --version >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if [[ "$(id -u)" -ne 0 ]]; then
+        error "Python's pip module is missing. Re-run with sudo/root so it can be installed automatically."
+        exit 1
+    fi
+
+    if command -v apt-get >/dev/null 2>&1; then
+        if [[ "${APT_UPDATED}" -eq 0 ]]; then
+            log "Updating apt package index..."
+            apt-get update -y
+            APT_UPDATED=1
+        fi
+        log "Installing python3-pip via apt-get..."
+        apt-get install -y python3-pip
+    elif command -v dnf >/dev/null 2>&1; then
+        log "Installing python3-pip via dnf..."
+        dnf install -y python3-pip
+    elif command -v yum >/dev/null 2>&1; then
+        log "Installing python3-pip via yum..."
+        yum install -y python3-pip
+    elif command -v pacman >/dev/null 2>&1; then
+        if [[ "${PACMAN_SYNCED}" -eq 0 ]]; then
+            log "Syncing pacman package databases..."
+            pacman -Sy --noconfirm
+            PACMAN_SYNCED=1
+        fi
+        log "Installing python-pip via pacman..."
+        pacman -S --noconfirm python-pip
+    fi
+
+    if ! python3 -m pip --version >/dev/null 2>&1; then
+        log "Attempting to bootstrap pip using python3 -m ensurepip..."
+        python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
+    fi
+
+    if ! python3 -m pip --version >/dev/null 2>&1; then
+        error "Unable to install Python pip. Please install it manually and re-run the installer."
+        exit 1
+    fi
+}
+
+ensure_pip
 
 if [[ -d "${TARGET_DIR}/.git" ]]; then
     log "Repository already present at ${TARGET_DIR}. Pulling latest changes..."
