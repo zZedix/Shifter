@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A production-ready toolkit for provisioning and operating secure network tunnels on Linux hosts.
+💎 Shifter is an open-source toolkit with a CLI and built-in WebUI for managing GOST, HAProxy, Xray, and iptables tunnels on Linux.
 
 ## ✨ Features
 
