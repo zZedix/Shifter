@@ -104,6 +104,25 @@ Extended guides are available under [`docs/`](docs/index.md), covering deploymen
 
 Shifter Toolkit is released under the [MIT License](LICENSE).
 
+## 💰 Donations
+
+If you find Shifter Toolkit useful and want to support its development, consider making a donation:
+
+### Cryptocurrency Donations
+- **Bitcoin (BTC)**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh`
+- **Ethereum (ETH)**: `0x8Fb2c4AF74e072CefC14A4E9927a1F86F1cd492c`
+- **Tron (TRX)**: `TD43B2eT7JC8upacMarcmBBGFkjy75QJHK`
+- **USDT (BEP20)**: `0x8Fb2c4AF74e072CefC14A4E9927a1F86F1cd492c`
+- **TON**: `UQAFTGSc2YRNGQwwuTyD0Q-eB7pB0BNG0yvx5jVYAJWFu-y6`
+
+### Other Ways to Support
+- ⭐ **Star the repository** if you find it useful
+- 🐛 **Report bugs** and suggest improvements
+- 📖 **Improve documentation** and translations
+- 🔗 **Share with others** who might benefit
+
 ---
 
 **Made with ❤️ by [zZedix](https://github.com/zZedix)**
+
+*Securing the digital world, one line of code at a time!*
