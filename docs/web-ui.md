@@ -4,7 +4,7 @@ Shifter bundles an AIOHTTP-powered web dashboard that surfaces the same operatio
 
 ## Launching the Dashboard
 ```bash
-sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
+sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path /admin-panel
 ```
 
 - `--host` controls the bind address (defaults to `127.0.0.1` for local-only access).
@@ -17,7 +17,7 @@ Sessions are handled via `aiohttp-session` with encrypted cookies. By default a 
 
 ```bash
 export AIOHTTP_SECRET_KEY="$(python -c 'import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"
-sudo shifter-toolkit serve
+sudo shifter-toolkit serve --base-path /admin-panel
 ```
 
 ## Features
