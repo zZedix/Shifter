@@ -27,8 +27,10 @@ python -m pip install shifter-toolkit
 
 ## One-Line Installer (systemd deployment)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh | sudo bash
 ```
+
+The script installs dependencies, clones the repository into `~/Shifter`, and starts the WebUI on a random path segment (stored in `~/Shifter/shifter-webui.basepath`). Append that slug to `http://<host>:2063` to reach the dashboard.
 
 Verify the installation:
 ```bash

@@ -21,15 +21,28 @@ def cli():
         sys.exit(1)
 
 # --- Web UI Command ---
+def _normalize_base_path(base_path: str) -> str:
+    normalized = base_path.strip()
+    if not normalized:
+        return "/"
+    if not normalized.startswith("/"):
+        normalized = f"/{normalized}"
+    normalized = "/" + normalized.strip("/")
+    return "/" if normalized == "//" else normalized
+
+
 @cli.command()
 @click.option('--host', default='127.0.0.1', help='Host to bind the web server to.')
 @click.option('--port', default=2063, type=int, help='Port to run the web server on.')
-def serve(host, port):
+@click.option('--base-path', default='/', help='Base URL path to mount the Web UI (e.g. /admin).')
+def serve(host, port, base_path):
     """Launch the Shifter web UI dashboard."""
+    normalized_base_path = _normalize_base_path(base_path)
     from .web.app import create_app
     from aiohttp import web
-    app = create_app()
-    click.echo(f"Starting Shifter web UI at http://{host}:{port}")
+    app = create_app(base_path=normalized_base_path)
+    url_suffix = "" if normalized_base_path == "/" else normalized_base_path
+    click.echo(f"Starting Shifter web UI at http://{host}:{port}{url_suffix}")
     web.run_app(app, host=host, port=port)
 
 # --- Status Command ---
