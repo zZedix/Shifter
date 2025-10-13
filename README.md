@@ -8,7 +8,7 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ## ✨ Features
 
-- 🎯 **Unified Control Plane** - Install, inspect, and remove tunnelling services
+- 🎯 **Unified Control Panel** - Install, inspect, and remove tunnelling services
 - 💻 **CLI Interface** - Colorful status output and command groups per service  
 - 🌐 **Web Dashboard** - AIOHTTP + Jinja2 powered dashboard
 - 📦 **Packaged Templates** - Reproducible deployments without network fetches
