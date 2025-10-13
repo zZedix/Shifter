@@ -24,7 +24,7 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ### ⚡ One-Line Installer
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/basepath/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
 ```
 
 ### 📦 Stable Release
