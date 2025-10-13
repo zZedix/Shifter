@@ -191,6 +191,24 @@ python3 -m pip install --upgrade pip setuptools wheel
 log "Installing Shifter Toolkit in editable mode..."
 python3 -m pip install -e "${TARGET_DIR}"
 
+detect_host_hint() {
+    local host_ip=""
+
+    if command -v ip >/dev/null 2>&1; then
+        host_ip="$(ip route get 8.8.8.8 2>/dev/null | awk 'NR==1{for(i=1;i<=NF;i++){if($i=="src"){print $(i+1); exit}}}')"
+    fi
+
+    if [[ -z "${host_ip}" ]] && command -v hostname >/dev/null 2>&1; then
+        host_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+    fi
+
+    if [[ -z "${host_ip}" ]]; then
+        host_ip="$(hostname -f 2>/dev/null || echo localhost)"
+    fi
+
+    printf '%s\n' "${host_ip}"
+}
+
 cleanup_stale_pid() {
     if [[ -f "${PID_FILE}" ]]; then
         local old_pid
@@ -225,7 +243,7 @@ start_daemon() {
     if kill -0 "${new_pid}" 2>/dev/null; then
         echo "${new_pid}" > "${PID_FILE}"
         log "WebUI started in background with PID ${new_pid}."
-        log "Visit: http://$(hostname -f 2>/dev/null || echo localhost):2063${BASE_PATH}"
+        log "Visit: http://$(detect_host_hint):2063${BASE_PATH}"
     else
         log "Failed to start WebUI daemon. Check ${LOG_FILE} for details."
         return 1
@@ -240,7 +258,7 @@ else
     echo "  sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path '${BASE_PATH}' &> ${LOG_FILE} &"
 fi
 
-HOST_HINT="$(hostname -f 2>/dev/null || echo localhost)"
+HOST_HINT="$(detect_host_hint)"
 
 cat <<EOF
 
