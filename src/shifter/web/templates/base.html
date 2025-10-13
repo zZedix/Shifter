@@ -27,8 +27,14 @@
                     <div class="flex-shrink-0 text-gray-800 font-bold text-lg">Shifter</div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="/" class="rounded-md px-3 py-2 text-sm font-medium {% if request.path == '/' %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if request.path == '/' }}">Dashboard</a>
-                            <a href="/configure" class="rounded-md px-3 py-2 text-sm font-medium {% if request.path == '/configure' %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if request.path == '/configure' }}">Configure</a>
+                            {% set _prefix = base_path_prefix %}
+                            {% set dashboard_url = _prefix if _prefix else '/' %}
+                            {% set configure_url = (_prefix if _prefix else '') + '/configure' %}
+                            {% set current_path = request.path.rstrip('/') if request.path != '/' else '/' %}
+                            {% set dashboard_target = dashboard_url.rstrip('/') if dashboard_url != '/' else '/' %}
+                            {% set configure_target = configure_url.rstrip('/') if configure_url != '/' else '/' %}
+                            <a href="{{ dashboard_url }}" class="rounded-md px-3 py-2 text-sm font-medium {% if current_path == dashboard_target %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if current_path == dashboard_target else 'false' }}">Dashboard</a>
+                            <a href="{{ configure_url }}" class="rounded-md px-3 py-2 text-sm font-medium {% if current_path == configure_target %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if current_path == configure_target else 'false' }}">Configure</a>
                         </div>
                     </div>
                 </div>
@@ -51,8 +57,14 @@
         </div>
         <div x-show="open" class="md:hidden" id="mobile-menu">
             <div class="space-y-1 px-2 pt-2 pb-3 sm:px-3">
-                <a href="/" class="block rounded-md px-3 py-2 text-base font-medium {% if request.path == '/' %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if request.path == '/' }}">Dashboard</a>
-                <a href="/configure" class="block rounded-md px-3 py-2 text-base font-medium {% if request.path == '/configure' %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if request.path == '/configure' }}">Configure</a>
+                {% set _prefix = base_path_prefix %}
+                {% set dashboard_url = _prefix if _prefix else '/' %}
+                {% set configure_url = (_prefix if _prefix else '') + '/configure' %}
+                {% set current_path = request.path.rstrip('/') if request.path != '/' else '/' %}
+                {% set dashboard_target = dashboard_url.rstrip('/') if dashboard_url != '/' else '/' %}
+                {% set configure_target = configure_url.rstrip('/') if configure_url != '/' else '/' %}
+                <a href="{{ dashboard_url }}" class="block rounded-md px-3 py-2 text-base font-medium {% if current_path == dashboard_target %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if current_path == dashboard_target else 'false' }}">Dashboard</a>
+                <a href="{{ configure_url }}" class="block rounded-md px-3 py-2 text-base font-medium {% if current_path == configure_target %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if current_path == configure_target else 'false' }}">Configure</a>
             </div>
         </div>
     </nav>
