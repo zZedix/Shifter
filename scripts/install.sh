@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Default branch to install from GitHub.
-DEFAULT_BRANCH="basepath"
+# Git branch to install; override via WEBUI_BRANCH if needed.
+DEFAULT_BRANCH="${WEBUI_BRANCH:-main}"
 REPO_URL="https://github.com/zZedix/Shifter.git"
 TARGET_DIR="${TARGET_DIR:-$HOME/Shifter}"
 PID_FILE="${TARGET_DIR}/shifter-webui.pid"
