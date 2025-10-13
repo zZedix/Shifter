@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Default branch to install from GitHub.
+DEFAULT_BRANCH="basepath"
 REPO_URL="https://github.com/zZedix/Shifter.git"
 TARGET_DIR="${TARGET_DIR:-$HOME/Shifter}"
 PID_FILE="${TARGET_DIR}/shifter-webui.pid"
 LOG_FILE="${TARGET_DIR}/shifter-webui.log"
 BASE_PATH_FILE="${TARGET_DIR}/shifter-webui.basepath"
+VERSION_FILE="${TARGET_DIR}/shifter-version.txt"
 BASE_PATH=""
 APT_UPDATED=0
 PACMAN_SYNCED=0
@@ -167,11 +170,18 @@ log "Using WebUI base path: ${BASE_PATH}"
 
 if [[ -d "${TARGET_DIR}/.git" ]]; then
     log "Repository already present at ${TARGET_DIR}. Pulling latest changes..."
+    git -C "${TARGET_DIR}" fetch --all --tags
     git -C "${TARGET_DIR}" pull --ff-only
 else
     log "Cloning Shifter Toolkit into ${TARGET_DIR}..."
-    git clone "${REPO_URL}" "${TARGET_DIR}"
+    git clone --branch "${DEFAULT_BRANCH}" --single-branch "${REPO_URL}" "${TARGET_DIR}"
 fi
+
+local_version="unknown"
+if [[ -d "${TARGET_DIR}/.git" ]]; then
+    local_version="$(git -C "${TARGET_DIR}" rev-parse --short HEAD || echo 'unknown')"
+fi
+printf '%s\n' "${local_version}" > "${VERSION_FILE}"
 
 printf '%s\n' "${BASE_PATH}" > "${BASE_PATH_FILE}"
 
