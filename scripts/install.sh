@@ -24,7 +24,13 @@ generate_base_path() {
         printf '%s\n' "${input}"
         return
     fi
-    tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 12
+    python3 - <<'PY'
+import secrets
+import string
+
+alphabet = string.ascii_letters + string.digits
+print(''.join(secrets.choice(alphabet) for _ in range(12)))
+PY
 }
 
 normalize_base_path() {
