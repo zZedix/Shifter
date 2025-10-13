@@ -22,6 +22,11 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ## 🚀 Installation
 
+### ⚡ One-Line Installer
+```bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/dev/scripts/install.sh | sudo bash
+```
+
 ### 📦 Stable Release
 ```bash
 pip install shifter-toolkit
@@ -41,19 +46,20 @@ pip install -e .
 sudo shifter-toolkit --help
 
 # 🌐 Launch the web dashboard (http://127.0.0.1:2063 by default)
-sudo shifter-toolkit serve --host 0.0.0.0 --port 2063
+sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path /admin-panel
 
 # 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
 ```
 
 > ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
+> 💡 **Installer tip**: The one-line installer writes a unique path slug to `~/Shifter/shifter-webui.basepath`. Combine that with your host and port (e.g., `http://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
 
 ## 📚 Command Reference
 
 | 🎯 Group | 💻 Example | 📝 Description |
 |----------|------------|----------------|
-| `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063` | Launch the AIOHTTP dashboard |
+| `serve` | `sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path /admin-panel` | Launch the AIOHTTP dashboard |
 | `status` | `sudo shifter-toolkit status haproxy` | Show active/enabled state plus parsed configuration details |
 | `gost` | `sudo shifter-toolkit gost install --domain example.com --port 8080` | Manage GOST tunnel deployment and forwarding rules |
 | `haproxy` | `sudo shifter-toolkit haproxy add --relay-port 8081 --main-server-ip 1.2.3.4 --main-server-port 443` | Configure HAProxy frontends/backends |
@@ -98,7 +104,7 @@ We recommend developing inside a virtual environment to isolate dependencies.
 
 ## 📖 Documentation
 
-Extended guides are available under [`docs/`](docs/), covering deployment patterns, CLI details, and release workflows.
+Extended guides are available under [`docs/`](docs/index.md), covering deployment patterns, CLI details, and release workflows.
 
 ## 📄 License
 
