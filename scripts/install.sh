@@ -17,8 +17,6 @@ AUTH_FILE="${CONFIG_DIR}/auth.json"
 BASE_PATH=""
 APT_UPDATED=0
 PACMAN_SYNCED=0
-GENERATED_USERNAME=""
-GENERATED_PASSWORD=""
 CERTBOT_ENABLED=0
 CERT_DOMAIN=""
 CERT_EMAIL=""
@@ -35,53 +33,6 @@ else
     INSTALLER_INTERACTIVE=0
 fi
 NONINTERACTIVE_MSG_PRINTED=0
-
-random_alnum() {
-    local length="${1:-16}"
-    LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${length}"
-}
-
-write_auth_json() {
-    local username="$1"
-    local password_hash="$2"
-    mkdir -p "$(dirname "${AUTH_FILE}")"
-    cat >"${AUTH_FILE}" <<EOF
-{
-    "username": "${username}",
-    "password_hash": "${password_hash}",
-    "cert_paths": {}
-}
-EOF
-    chmod 600 "${AUTH_FILE}" 2>/dev/null || true
-}
-
-fallback_generate_credentials() {
-    if ! command -v shifter-toolkit >/dev/null 2>&1; then
-        return 1
-    fi
-
-    local username="shifter-$(random_alnum 6)"
-    local placeholder_hash='$2b$12$Jm5M1HgeoJZ4YR6jliOpze3oFUaVWYZ3RKlxv..q6tDAQjPF1WGB6'
-    write_auth_json "${username}" "${placeholder_hash}"
-
-    log "Falling back to shifter-toolkit reset-credentials..."
-    local output password
-    if ! output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" SHIFTER_AUTH_FILE="${AUTH_FILE}" shifter-toolkit reset-credentials --username "${username}" --generate --length 20 2>&1)"; then
-        log "Credential fallback via shifter-toolkit failed:\n${output}"
-        return 1
-    fi
-
-    password="$(printf '%s\n' "${output}" | awk -F': ' '/Password:/ {print $2}' | tail -n1)"
-    if [[ -z "${password}" ]]; then
-        log "Credential fallback succeeded but password could not be parsed. Output:\n${output}"
-        return 1
-    fi
-
-    GENERATED_USERNAME="${username}"
-    GENERATED_PASSWORD="${password}"
-    log "Credentials generated via fallback."
-    return 0
-}
 
 log() {
     printf '[Shifter Toolkit installer] %s\n' "$*"
@@ -233,97 +184,6 @@ ensure_pip() {
     fi
 }
 
-generate_credentials() {
-    if [[ -f "${AUTH_FILE}" ]]; then
-        log "Authentication configuration already exists at ${AUTH_FILE}; skipping credential generation."
-        return
-    fi
-
-    log "Generating secure WebUI credentials..."
-
-    local cli_username="shifter-$(random_alnum 6)"
-    local cli_password="$(random_alnum 20)"
-    local placeholder_hash='$2b$12$Jm5M1HgeoJZ4YR6jliOpze3oFUaVWYZ3RKlxv..q6tDAQjPF1WGB6'
-    write_auth_json "${cli_username}" "${placeholder_hash}"
-
-    if command -v shifter-toolkit >/dev/null 2>&1; then
-        local cli_output=""
-        if cli_output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" SHIFTER_AUTH_FILE="${AUTH_FILE}" shifter-toolkit reset-credentials --username "${cli_username}" --password "${cli_password}" 2>&1)"; then
-            GENERATED_USERNAME="${cli_username}"
-            GENERATED_PASSWORD="${cli_password}"
-            log "Credentials generated via shifter-toolkit CLI."
-            return
-        fi
-        log "shifter-toolkit reset-credentials failed, falling back to Python:\n${cli_output}"
-    fi
-
-    local output=""
-    local python_status=0
-    local python_cmd=(python3)
-
-    if command -v timeout >/dev/null 2>&1; then
-        python_cmd=(timeout 30 python3)
-    fi
-
-    output="$(
-        CONFIG_DIR="${CONFIG_DIR}" AUTH_FILE="${AUTH_FILE}" PYTHONUNBUFFERED=1 "${python_cmd[@]}" - <<'PY'
-import json
-import os
-import secrets
-import string
-import sys
-import bcrypt
-from pathlib import Path
-
-config_dir = Path(os.environ["CONFIG_DIR"])
-auth_file = Path(os.environ["AUTH_FILE"])
-config_dir.mkdir(parents=True, exist_ok=True)
-
-alphabet = string.ascii_letters + string.digits
-username = "shifter-" + "".join(secrets.choice(alphabet) for _ in range(6))
-password = "".join(secrets.choice(alphabet) for _ in range(20))
-password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-payload = {
-    "username": username,
-    "password_hash": password_hash,
-    "cert_paths": {}
-}
-
-with auth_file.open("w", encoding="utf-8") as handle:
-    json.dump(payload, handle, indent=4)
-    handle.write("\n")
-
-try:
-    os.chmod(auth_file, 0o600)
-except OSError:
-    pass
-
-sys.stdout.write(f"USERNAME={username}\nPASSWORD={password}\n")
-sys.stdout.flush()
-PY
-    2>&1)" || python_status=$?
-
-    if [[ ${python_status} -ne 0 || -z "${output}" ]]; then
-        log "Python-based credential generation failed or timed out (exit code: ${python_status})."
-        if [[ -n "${output}" ]]; then
-            log "Python output:\n${output}"
-        fi
-        if fallback_generate_credentials; then
-            return
-        fi
-        error "Unable to generate credentials automatically. Please run:\n  sudo shifter-toolkit reset-credentials --generate\nand rerun the installer."
-        exit 1
-    fi
-
-    while IFS='=' read -r key value; do
-        case "${key}" in
-            USERNAME) GENERATED_USERNAME="${value}" ;;
-            PASSWORD) GENERATED_PASSWORD="${value}" ;;
-        esac
-    done <<<"${output}"
-}
-
 update_auth_cert_paths() {
     if [[ -z "${CERT_FULLCHAIN}" || -z "${CERT_PRIVKEY}" ]]; then
         return
@@ -458,14 +318,13 @@ fi
 printf '%s\n' "${local_version}" > "${VERSION_FILE}"
 
 printf '%s\n' "${BASE_PATH}" > "${BASE_PATH_FILE}"
+mkdir -p "${CONFIG_DIR}"
 
 log "Installing Python dependencies..."
 python3 -m pip install --upgrade pip setuptools wheel
 
 log "Installing Shifter Toolkit in editable mode..."
 python3 -m pip install -e "${TARGET_DIR}"
-
-generate_credentials
 maybe_configure_https
 
 detect_host_hint() {
@@ -601,8 +460,8 @@ Credentials file:
   ${AUTH_FILE}
 Base path record:
   ${BASE_PATH_FILE}
-Credential reset command:
-  sudo shifter-toolkit reset-credentials
+Run this to create WebUI credentials:
+  sudo shifter-toolkit reset-credentials --generate
 EOF
 
 if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
@@ -611,16 +470,6 @@ cat <<EOF
 Certificate paths (stored in auth.json):
   fullchain: ${CERT_FULLCHAIN}
   privkey: ${CERT_PRIVKEY}
-EOF
-fi
-
-if [[ -n "${GENERATED_USERNAME}" && -n "${GENERATED_PASSWORD}" ]]; then
-cat <<EOF
-
-Generated WebUI credentials (store securely):
-  Username: ${GENERATED_USERNAME}
-  Password: ${GENERATED_PASSWORD}
-
 EOF
 fi
 
@@ -639,24 +488,12 @@ fi
 
 INSTALL_ROOT="$(cd "${TARGET_DIR}" 2>/dev/null && pwd || printf '%s' "${TARGET_DIR}")"
 
-if [[ -n "${GENERATED_USERNAME}" && -n "${GENERATED_PASSWORD}" ]]; then
-    ACCESS_CREDS="$(cat <<EOF
-Username: ${GENERATED_USERNAME}
-Password: ${GENERATED_PASSWORD}
-EOF
-)"
-else
-    ACCESS_CREDS="$(cat <<'EOF'
-Username: (existing)
-Password: (existing - unchanged)
-EOF
-)"
-fi
-
 printf '\n\033[32m%s\033[0m\n' "$(cat <<EOF
 Full access URL: ${FULL_ACCESS_URL}
 Install directory: ${INSTALL_ROOT}
 Web UI base path: ${BASE_PATH}
-${ACCESS_CREDS}
+Next steps:
+  1. sudo shifter-toolkit reset-credentials --generate
+  2. Copy the printed username/password for login
 EOF
 )"
