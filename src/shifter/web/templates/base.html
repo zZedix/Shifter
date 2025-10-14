@@ -25,25 +25,37 @@
             <div class="flex h-16 items-center justify-between">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 text-gray-800 font-bold text-lg">Shifter</div>
+                    {% set _prefix = base_path_prefix %}
+                    {% set dashboard_url = _prefix if _prefix else '/' %}
+                    {% set configure_url = (_prefix if _prefix else '') + '/configure' %}
+                    {% set login_url = (_prefix if _prefix else '') + '/login' %}
+                    {% set current_user = user if user is defined else None %}
                     <div class="hidden md:block">
+                        {% if current_user %}
                         <div class="ml-10 flex items-baseline space-x-4">
-                            {% set _prefix = base_path_prefix %}
-                            {% set dashboard_url = _prefix if _prefix else '/' %}
-                            {% set configure_url = (_prefix if _prefix else '') + '/configure' %}
                             {% set current_path = request.path.rstrip('/') if request.path != '/' else '/' %}
                             {% set dashboard_target = dashboard_url.rstrip('/') if dashboard_url != '/' else '/' %}
                             {% set configure_target = configure_url.rstrip('/') if configure_url != '/' else '/' %}
                             <a href="{{ dashboard_url }}" class="rounded-md px-3 py-2 text-sm font-medium {% if current_path == dashboard_target %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if current_path == dashboard_target else 'false' }}">Dashboard</a>
                             <a href="{{ configure_url }}" class="rounded-md px-3 py-2 text-sm font-medium {% if current_path == configure_target %}bg-slate-200 text-slate-900{% else %}text-gray-500 hover:bg-slate-100 hover:text-gray-900{% endif %}" aria-current="{{ 'page' if current_path == configure_target else 'false' }}">Configure</a>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="hidden md:block">
                     <div class="ml-4 flex items-center md:ml-6">
-                        <a href="https://github.com/zZedix/Shifter" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600">
+                        <a href="https://github.com/zZedix/Shifter" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600 mr-4">
                             <span class="sr-only">GitHub</span>
                             <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.492.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd" /></svg>
                         </a>
+                        {% if current_user %}
+                        <span class="text-sm text-gray-600 mr-4">Signed in as <span class="font-medium text-gray-800">{{ current_user.username }}</span></span>
+                        <form action="{{ (_prefix if _prefix else '') + '/logout' }}" method="post">
+                            <button type="submit" class="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1">Sign out</button>
+                        </form>
+                        {% else %}
+                        <a href="{{ login_url }}" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1">Sign in</a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="-mr-2 flex md:hidden">
@@ -57,14 +69,18 @@
         </div>
         <div x-show="open" class="md:hidden" id="mobile-menu">
             <div class="space-y-1 px-2 pt-2 pb-3 sm:px-3">
-                {% set _prefix = base_path_prefix %}
-                {% set dashboard_url = _prefix if _prefix else '/' %}
-                {% set configure_url = (_prefix if _prefix else '') + '/configure' %}
                 {% set current_path = request.path.rstrip('/') if request.path != '/' else '/' %}
                 {% set dashboard_target = dashboard_url.rstrip('/') if dashboard_url != '/' else '/' %}
                 {% set configure_target = configure_url.rstrip('/') if configure_url != '/' else '/' %}
+                {% if current_user %}
                 <a href="{{ dashboard_url }}" class="block rounded-md px-3 py-2 text-base font-medium {% if current_path == dashboard_target %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if current_path == dashboard_target else 'false' }}">Dashboard</a>
                 <a href="{{ configure_url }}" class="block rounded-md px-3 py-2 text-base font-medium {% if current_path == configure_target %}bg-slate-200 text-slate-900{% else %}text-gray-600 hover:bg-slate-100 hover:text-gray-800{% endif %}" aria-current="{{ 'page' if current_path == configure_target else 'false' }}">Configure</a>
+                <form action="{{ (_prefix if _prefix else '') + '/logout' }}" method="post" class="px-3 py-2">
+                    <button type="submit" class="w-full rounded-md bg-red-500 px-3 py-2 text-base font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">Sign out</button>
+                </form>
+                {% else %}
+                <a href="{{ login_url }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-slate-100 hover:text-gray-800">Sign in</a>
+                {% endif %}
             </div>
         </div>
     </nav>
