@@ -23,9 +23,13 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ## 🚀 Installation
 
-### ⚡ One-Line Installer
+### ⚡ Interactive Installer
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh -o install.sh
+chmod +x install.sh
+sudo ./install.sh
+# First-time credentials (run after installer finishes)
+sudo shifter-toolkit reset-credentials --generate
 ```
 
 ### 🔧 From Source
@@ -41,18 +45,18 @@ pip install -e .
 # 📋 Review available commands
 sudo shifter-toolkit --help
 
-# 🔐 View the generated WebUI credentials (username + bcrypt hash)
-sudo cat /root/Shifter/config/auth.json
-
-# 🔄 Rotate credentials (prompts or use --generate for a random password)
+# 🔐 Create or update WebUI credentials
 sudo shifter-toolkit reset-credentials --generate
+
+# 📄 Inspect the stored credential hash (optional)
+sudo cat /root/Shifter/config/auth.json
 
 # 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
 ```
 
 > ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
-> 💡 **Installer tip**: The installer writes a unique path slug to `~/Shifter/shifter-webui.basepath` and stores the generated username/password hash in `~/Shifter/config/auth.json`. Combine the base path with your host/port (e.g., `https://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
+> 💡 **Installer tip**: The installer writes a unique path slug to `~/Shifter/shifter-webui.basepath`. After the install, run `sudo shifter-toolkit reset-credentials --generate` to create your login and store the hash in `~/Shifter/config/auth.json`. Combine the base path with your host/port (e.g., `https://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
 
 ## 📚 Command Reference
 
@@ -72,7 +76,7 @@ Run `sudo shifter-toolkit <group> --help` for all arguments on a specific comman
 Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.
 
 - 📁 Templates live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
-- 🔐 Installer generates a random username/password stored securely in `~/Shifter/config/auth.json`
+- 🔐 Generate credentials with `sudo shifter-toolkit reset-credentials --generate` after installing (hash stored securely in `~/Shifter/config/auth.json`)
 - 🔑 Reset credentials any time with `sudo shifter-toolkit reset-credentials` (supports prompts or random generation)
 - 🧁 Sessions are backed by encrypted cookies—set `AIOHTTP_SECRET_KEY` to persist the cookie key across restarts
 - 🔒 Optional HTTPS provisioning via Let's Encrypt when the installer runs (interactive prompt or `SHIFTER_ENABLE_HTTPS`, `SHIFTER_DOMAIN`, `SHIFTER_CONTACT_EMAIL`)
