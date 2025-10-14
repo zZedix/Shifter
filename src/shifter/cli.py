@@ -6,6 +6,7 @@ import os
 import sys
 
 import click
+from aiohttp import web
 
 from .services import gost, haproxy, iptables, status as status_module, xray
 
@@ -38,12 +39,34 @@ def _normalize_base_path(base_path: str) -> str:
 def serve(host, port, base_path):
     """Launch the Shifter web UI dashboard."""
     normalized_base_path = _normalize_base_path(base_path)
+    from .web.auth import AuthManager, AuthConfigError
     from .web.app import create_app
-    from aiohttp import web
-    app = create_app(base_path=normalized_base_path)
+
+    try:
+        auth_manager = AuthManager()
+    except AuthConfigError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    cert_paths = auth_manager.cert_paths or {}
+    fullchain = cert_paths.get("fullchain")
+    privkey = cert_paths.get("privkey")
+
+    ssl_context = None
+    scheme = "http"
+    if fullchain and privkey and os.path.exists(fullchain) and os.path.exists(privkey):
+        import ssl
+
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(fullchain, privkey)
+        scheme = "https"
+        if "SHIFTER_SESSION_SECURE" not in os.environ:
+            os.environ["SHIFTER_SESSION_SECURE"] = "true"
+
+    app = create_app(base_path=normalized_base_path, auth_manager=auth_manager)
     url_suffix = "" if normalized_base_path == "/" else normalized_base_path
-    click.echo(f"Starting Shifter web UI at http://{host}:{port}{url_suffix}")
-    web.run_app(app, host=host, port=port)
+    click.echo(f"Starting Shifter web UI at {scheme}://{host}:{port}{url_suffix}")
+    web.run_app(app, host=host, port=port, ssl_context=ssl_context)
 
 # --- Status Command ---
 def print_detailed_status(service_name, status_data):
