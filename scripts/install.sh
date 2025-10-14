@@ -505,6 +505,8 @@ Credentials file:
   ${AUTH_FILE}
 Base path record:
   ${BASE_PATH_FILE}
+Credential reset command:
+  sudo shifter-toolkit reset-credentials
 EOF
 
 if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
@@ -528,7 +530,7 @@ fi
 
 FULL_ACCESS_URL=""
 if [[ "${CERTBOT_ENABLED}" -eq 1 && -n "${CERT_DOMAIN}" ]]; then
-    FULL_ACCESS_URL="https://${CERT_DOMAIN}"
+    FULL_ACCESS_URL="https://${CERT_DOMAIN}:2063"
     if [[ "${BASE_PATH}" != "/" ]]; then
         FULL_ACCESS_URL="${FULL_ACCESS_URL}${BASE_PATH}"
     fi
