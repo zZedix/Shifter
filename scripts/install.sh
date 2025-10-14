@@ -41,6 +41,20 @@ random_alnum() {
     LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${length}"
 }
 
+write_auth_json() {
+    local username="$1"
+    local password_hash="$2"
+    mkdir -p "$(dirname "${AUTH_FILE}")"
+    cat >"${AUTH_FILE}" <<EOF
+{
+    "username": "${username}",
+    "password_hash": "${password_hash}",
+    "cert_paths": {}
+}
+EOF
+    chmod 600 "${AUTH_FILE}" 2>/dev/null || true
+}
+
 fallback_generate_credentials() {
     if ! command -v shifter-toolkit >/dev/null 2>&1; then
         error "Unable to fallback credential generation because 'shifter-toolkit' CLI is not available."
@@ -224,6 +238,21 @@ generate_credentials() {
     fi
 
     log "Generating secure WebUI credentials..."
+
+    local username="shifter-$(random_alnum 6)"
+
+    if command -v openssl >/dev/null 2>&1 && openssl passwd -help 2>/dev/null | grep -q -- "-bcrypt"; then
+        local password hash
+        password="$(random_alnum 20)"
+        if hash="$(openssl passwd -bcrypt "${password}" 2>/dev/null)"; then
+            write_auth_json "${username}" "${hash}"
+            GENERATED_USERNAME="${username}"
+            GENERATED_PASSWORD="${password}"
+            log "Credentials generated with OpenSSL."
+            return
+        fi
+        log "OpenSSL bcrypt generation failed; falling back to Python."
+    fi
 
     local output=""
     local python_status=0
