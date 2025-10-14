@@ -257,10 +257,15 @@ maybe_configure_https() {
     CERT_FULLCHAIN=""
     CERT_PRIVKEY=""
 
+    log "Checking HTTPS configuration options..."
     if [[ -n "${SHIFTER_ENABLE_HTTPS:-}" ]]; then
         answer="${SHIFTER_ENABLE_HTTPS}"
+        log "HTTPS configuration set via environment variable: ${answer}"
     elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-        if ! read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer <"${INSTALLER_TTY}" 2>/dev/null; then
+        log "HTTPS setup is optional. You can skip this step by pressing Enter."
+        log "Waiting for user input (30 seconds timeout)..."
+        if ! timeout 30 read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer <"${INSTALLER_TTY}" 2>/dev/null; then
+            log "No input received within 30 seconds. Skipping HTTPS setup."
             answer=""
         fi
     else
@@ -272,13 +277,17 @@ maybe_configure_https() {
     fi
 
     choice="$(printf '%s' "${answer}" | tr '[:upper:]' '[:lower:]')"
+    log "HTTPS choice: ${choice}"
 
     case "${choice}" in
         y|yes)
+            log "HTTPS setup requested. Proceeding with certificate configuration..."
             if [[ -n "${SHIFTER_DOMAIN:-}" ]]; then
                 CERT_DOMAIN="${SHIFTER_DOMAIN}"
             elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-                if ! read -r -p "Domain name: " CERT_DOMAIN <"${INSTALLER_TTY}" 2>/dev/null; then
+                log "Waiting for domain name input (30 seconds timeout)..."
+                if ! timeout 30 read -r -p "Domain name: " CERT_DOMAIN <"${INSTALLER_TTY}" 2>/dev/null; then
+                    log "No domain name provided within 30 seconds. Skipping HTTPS setup."
                     CERT_DOMAIN=""
                 fi
             else
@@ -293,7 +302,9 @@ maybe_configure_https() {
             if [[ -n "${SHIFTER_CONTACT_EMAIL:-}" ]]; then
                 CERT_EMAIL="${SHIFTER_CONTACT_EMAIL}"
             elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-                if ! read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL <"${INSTALLER_TTY}" 2>/dev/null; then
+                log "Waiting for email input (30 seconds timeout)..."
+                if ! timeout 30 read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL <"${INSTALLER_TTY}" 2>/dev/null; then
+                    log "No email provided within 30 seconds. Skipping HTTPS setup."
                     CERT_EMAIL=""
                 fi
             else
@@ -333,9 +344,10 @@ maybe_configure_https() {
             fi
             ;;
         *)
-            log "HTTPS setup skipped."
+            log "HTTPS setup skipped. Application will run with HTTP only."
             ;;
     esac
+    log "HTTPS configuration completed."
 }
 
 ensure_pip
@@ -376,7 +388,10 @@ log "You may see compilation messages - this is normal."
 log "The application will be installed in development mode for easy updates."
 log "This allows you to modify the code and see changes immediately."
 safe_pip_install -e "${TARGET_DIR}"
+
+log "Starting HTTPS configuration check..."
 maybe_configure_https
+log "HTTPS configuration check completed."
 
 detect_host_hint() {
     local host_ip=""
