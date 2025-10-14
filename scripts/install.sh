@@ -468,3 +468,31 @@ Generated WebUI credentials (store securely):
 
 EOF
 fi
+
+FULL_ACCESS_URL=""
+if [[ "${CERTBOT_ENABLED}" -eq 1 && -n "${CERT_DOMAIN}" ]]; then
+    FULL_ACCESS_URL="https://${CERT_DOMAIN}"
+    if [[ "${BASE_PATH}" != "/" ]]; then
+        FULL_ACCESS_URL="${FULL_ACCESS_URL}${BASE_PATH}"
+    fi
+else
+    FULL_ACCESS_URL="http://${HOST_HINT}:2063"
+    if [[ "${BASE_PATH}" != "/" ]]; then
+        FULL_ACCESS_URL="${FULL_ACCESS_URL}${BASE_PATH}"
+    fi
+fi
+
+INSTALL_ROOT="$(cd "${TARGET_DIR}" 2>/dev/null && pwd || printf '%s' "${TARGET_DIR}")"
+
+if [[ -n "${GENERATED_USERNAME}" && -n "${GENERATED_PASSWORD}" ]]; then
+    ACCESS_CREDS="Username: ${GENERATED_USERNAME}\nPassword: ${GENERATED_PASSWORD}"
+else
+    ACCESS_CREDS="Username: (existing)\nPassword: (existing - unchanged)"
+fi
+
+printf '\n\033[32m%s\033[0m\n' "$(cat <<EOF
+Full access URL: ${FULL_ACCESS_URL}
+Base path: ${INSTALL_ROOT}
+${ACCESS_CREDS}
+EOF
+)"
