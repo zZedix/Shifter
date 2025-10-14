@@ -192,6 +192,9 @@ async def login_action(request: web.Request):
     session = await get_session(request)
     auth_manager = request.app["auth_manager"]
 
+    # Reload credentials in case they were updated externally.
+    auth_manager.reload()
+
     if username == auth_manager.username and auth_manager.verify_password(password):
         session["user"] = {"username": auth_manager.username}
         session["flash"] = {"type": "success", "message": "Logged in successfully."}
@@ -218,6 +221,9 @@ async def change_credentials_action(request: web.Request):
     confirm_password = post_data.get("confirm_password", "")
 
     auth_manager = request.app["auth_manager"]
+
+    # Ensure we use the latest credentials when validating.
+    auth_manager.reload()
 
     if not auth_manager.verify_password(current_password):
         session["flash"] = {"type": "error", "message": "Current password was incorrect."}
