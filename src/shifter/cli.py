@@ -4,8 +4,11 @@
 
 import os
 import sys
+import secrets
+import string
 
 import click
+from aiohttp import web
 
 from .services import gost, haproxy, iptables, status as status_module, xray
 
@@ -38,12 +41,91 @@ def _normalize_base_path(base_path: str) -> str:
 def serve(host, port, base_path):
     """Launch the Shifter web UI dashboard."""
     normalized_base_path = _normalize_base_path(base_path)
+    from .web.auth import AuthManager, AuthConfigError
     from .web.app import create_app
-    from aiohttp import web
-    app = create_app(base_path=normalized_base_path)
+
+    try:
+        auth_manager = AuthManager()
+    except AuthConfigError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    cert_paths = auth_manager.cert_paths or {}
+    fullchain = cert_paths.get("fullchain")
+    privkey = cert_paths.get("privkey")
+
+    ssl_context = None
+    scheme = "http"
+    if fullchain and privkey and os.path.exists(fullchain) and os.path.exists(privkey):
+        import ssl
+
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(fullchain, privkey)
+        scheme = "https"
+        if "SHIFTER_SESSION_SECURE" not in os.environ:
+            os.environ["SHIFTER_SESSION_SECURE"] = "true"
+
+    app = create_app(base_path=normalized_base_path, auth_manager=auth_manager)
     url_suffix = "" if normalized_base_path == "/" else normalized_base_path
-    click.echo(f"Starting Shifter web UI at http://{host}:{port}{url_suffix}")
-    web.run_app(app, host=host, port=port)
+    click.echo(f"Starting Shifter web UI at {scheme}://{host}:{port}{url_suffix}")
+    web.run_app(app, host=host, port=port, ssl_context=ssl_context)
+
+
+def _generate_password(length: int = 20) -> str:
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+@cli.command(name="reset-credentials")
+@click.option("--username", help="New username for the WebUI.")
+@click.option("--password", help="New password for the WebUI (prompted if omitted).")
+@click.option("--generate", is_flag=True, help="Generate a random password instead of prompting.")
+@click.option("--length", default=20, show_default=True, type=int, help="Password length when using --generate.")
+def reset_credentials(username, password, generate, length):
+    """Reset the WebUI username and password stored in auth.json."""
+    from .web.auth import AuthManager, AuthConfigError
+
+    try:
+        auth_manager = AuthManager()
+    except AuthConfigError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    if not username:
+        username = click.prompt("New username", type=str).strip()
+    if not username:
+        click.echo("Username must not be empty.", err=True)
+        sys.exit(1)
+
+    generated_password = None
+    if generate:
+        if password:
+            click.echo("--password cannot be combined with --generate.", err=True)
+            sys.exit(1)
+        if length < 8:
+            click.echo("Password length must be at least 8 characters.", err=True)
+            sys.exit(1)
+        generated_password = _generate_password(length)
+        password_to_use = generated_password
+    else:
+        if not password:
+            password = click.prompt("New password", hide_input=True, confirmation_prompt=True)
+        password_to_use = password
+
+    if not password_to_use:
+        click.echo("Password must not be empty.", err=True)
+        sys.exit(1)
+
+    if len(password_to_use) < 8:
+        click.echo("Password must be at least 8 characters long.", err=True)
+        sys.exit(1)
+
+    auth_manager.update_credentials(username, password_to_use)
+    click.echo("Credentials updated successfully.")
+    if generated_password:
+        click.echo("Store these credentials securely:")
+        click.echo(f"  Username: {username}")
+        click.echo(f"  Password: {generated_password}")
 
 # --- Status Command ---
 def print_detailed_status(service_name, status_data):

@@ -29,6 +29,7 @@ dependencies = [
     "click>=8.0",
     "jinja2>=3.0",
     "requests>=2.25",
+    "bcrypt>=4.0",
 ]
 
 [project.urls]
