@@ -55,34 +55,6 @@ EOF
     chmod 600 "${AUTH_FILE}" 2>/dev/null || true
 }
 
-fallback_generate_credentials() {
-    if ! command -v shifter-toolkit >/dev/null 2>&1; then
-        error "Unable to fallback credential generation because 'shifter-toolkit' CLI is not available."
-        exit 1
-    fi
-
-    local username="shifter-$(random_alnum 6)"
-    local output password
-
-    write_auth_json "${username}" "placeholder"
-
-    log "Falling back to shifter-toolkit CLI for credential generation..."
-    if ! output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" shifter-toolkit reset-credentials --username "${username}" --generate --length 20 2>&1)"; then
-        error "Credential fallback failed:\n${output}"
-        exit 1
-    fi
-
-    password="$(printf '%s\n' "${output}" | awk -F': ' '/Password:/ {print $2}' | tail -n1)"
-    if [[ -z "${password}" ]]; then
-        error "Fallback credential generation succeeded but password could not be parsed. Output:\n${output}"
-        exit 1
-    fi
-
-    GENERATED_USERNAME="${username}"
-    GENERATED_PASSWORD="${password}"
-    log "Credentials generated via fallback."
-}
-
 log() {
     printf '[Shifter Toolkit installer] %s\n' "$*"
 }
@@ -242,79 +214,23 @@ generate_credentials() {
     log "Generating secure WebUI credentials..."
 
     local username="shifter-$(random_alnum 6)"
+    local placeholder_hash='$2b$12$Jm5M1HgeoJZ4YR6jliOpze3oFUaVWYZ3RKlxv..q6tDAQjPF1WGB6'
+    write_auth_json "${username}" "${placeholder_hash}"
 
-    if command -v openssl >/dev/null 2>&1 && openssl passwd -help 2>/dev/null | grep -q -- "-bcrypt"; then
-        local password hash
-        password="$(random_alnum 20)"
-        if hash="$(openssl passwd -bcrypt "${password}" 2>/dev/null)"; then
-            write_auth_json "${username}" "${hash}"
-            GENERATED_USERNAME="${username}"
-            GENERATED_PASSWORD="${password}"
-            log "Credentials generated with OpenSSL."
-            return
-        fi
-        log "OpenSSL bcrypt generation failed; falling back to Python."
+    local output password
+    if ! output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" shifter-toolkit reset-credentials --username "${username}" --generate --length 20 2>&1)"; then
+        error "Failed to generate credentials via shifter-toolkit reset-credentials:\n${output}"
+        exit 1
     fi
 
-    local output=""
-    local python_status=0
-    local python_cmd=(python3)
-
-    if command -v timeout >/dev/null 2>&1; then
-        python_cmd=(timeout 60 python3)
+    password="$(printf '%s\n' "${output}" | awk -F': ' '/Password:/ {print $2}' | tail -n1)"
+    if [[ -z "${password}" ]]; then
+        error "Credential generation succeeded but password could not be parsed. Output:\n${output}"
+        exit 1
     fi
 
-    output="$(
-        CONFIG_DIR="${CONFIG_DIR}" AUTH_FILE="${AUTH_FILE}" PYTHONUNBUFFERED=1 "${python_cmd[@]}" - <<'PY'
-import json
-import os
-import secrets
-import string
-import sys
-import bcrypt
-from pathlib import Path
-
-config_dir = Path(os.environ["CONFIG_DIR"])
-auth_file = Path(os.environ["AUTH_FILE"])
-config_dir.mkdir(parents=True, exist_ok=True)
-
-alphabet = string.ascii_letters + string.digits
-username = "shifter-" + "".join(secrets.choice(alphabet) for _ in range(6))
-password = "".join(secrets.choice(alphabet) for _ in range(20))
-password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-payload = {
-    "username": username,
-    "password_hash": password_hash,
-    "cert_paths": {}
-}
-
-auth_file.write_text(json.dumps(payload, indent=4) + "\n", encoding="utf-8")
-try:
-    os.chmod(auth_file, 0o600)
-except OSError:
-    pass
-
-sys.stdout.write(f"USERNAME={username}\nPASSWORD={password}\n")
-sys.stdout.flush()
-PY
-    2>&1)" || python_status=$?
-
-    if [[ ${python_status} -ne 0 || -z "${output}" ]]; then
-        log "Python-based credential generation failed or timed out (exit code: ${python_status})."
-        if [[ -n "${output}" ]]; then
-            log "Python output:\n${output}"
-        fi
-        fallback_generate_credentials
-        return
-    fi
-
-    while IFS='=' read -r key value; do
-        case "${key}" in
-            USERNAME) GENERATED_USERNAME="${value}" ;;
-            PASSWORD) GENERATED_PASSWORD="${value}" ;;
-        esac
-    done <<<"${output}"
+    GENERATED_USERNAME="${username}"
+    GENERATED_PASSWORD="${password}"
 }
 
 update_auth_cert_paths() {
