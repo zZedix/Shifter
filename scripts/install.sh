@@ -64,6 +64,8 @@ fallback_generate_credentials() {
     local username="shifter-$(random_alnum 6)"
     local output password
 
+    write_auth_json "${username}" "placeholder"
+
     log "Falling back to shifter-toolkit CLI for credential generation..."
     if ! output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" shifter-toolkit reset-credentials --username "${username}" --generate --length 20 2>&1)"; then
         error "Credential fallback failed:\n${output}"
@@ -296,10 +298,13 @@ except OSError:
 sys.stdout.write(f"USERNAME={username}\nPASSWORD={password}\n")
 sys.stdout.flush()
 PY
-    )" || python_status=$?
+    2>&1)" || python_status=$?
 
     if [[ ${python_status} -ne 0 || -z "${output}" ]]; then
         log "Python-based credential generation failed or timed out (exit code: ${python_status})."
+        if [[ -n "${output}" ]]; then
+            log "Python output:\n${output}"
+        fi
         fallback_generate_credentials
         return
     fi
