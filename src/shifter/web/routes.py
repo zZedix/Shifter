@@ -33,6 +33,17 @@ def _strip_base_path(request: web.Request) -> Iterable[str]:
     return segments
 
 
+def _login_path(request: web.Request) -> str:
+    return _with_base_path(request.app, "/login")
+
+
+async def _require_auth(request: web.Request):
+    session = await get_session(request)
+    if not session.get("user"):
+        raise web.HTTPFound(_login_path(request))
+    return session
+
+
 async def _run_cli_command(command_parts):
     command = [sys.executable, "-m", "shifter"] + command_parts
     process = await asyncio.create_subprocess_exec(
@@ -47,7 +58,7 @@ async def _run_cli_command(command_parts):
 
 async def _handle_form_action(request: web.Request, redirect_path: str = "/configure"):
     post_data = await request.post()
-    session = await get_session(request)
+    session = await _require_auth(request)
 
     segments = list(_strip_base_path(request))
     if len(segments) < 2:
@@ -69,18 +80,20 @@ async def _handle_form_action(request: web.Request, redirect_path: str = "/confi
 
 @aiohttp_jinja2.template("index.html")
 async def dashboard(request: web.Request):
+    session = await _require_auth(request)
     status_data = status_module.get_all_services_status()
     return {
         "services": status_data,
         "request": request,
         "base_path": request.app["base_path"],
         "base_path_prefix": request.app["base_path_prefix"],
+        "user": session.get("user"),
     }
 
 
 @aiohttp_jinja2.template("configure.html")
 async def configure_page(request: web.Request):
-    session = await get_session(request)
+    session = await _require_auth(request)
     flash_message = session.pop("flash", None)
 
     status_data = status_module.get_all_services_status()
@@ -97,6 +110,7 @@ async def configure_page(request: web.Request):
         "request": request,
         "base_path": request.app["base_path"],
         "base_path_prefix": request.app["base_path_prefix"],
+        "user": session.get("user"),
     }
 
 
@@ -156,6 +170,90 @@ async def iptables_uninstall_action(request: web.Request):
     return await _handle_form_action(request)
 
 
+@aiohttp_jinja2.template("login.html")
+async def login_page(request: web.Request):
+    session = await get_session(request)
+    if session.get("user"):
+        raise web.HTTPFound(_with_base_path(request.app, "/"))
+    flash_message = session.pop("flash", None)
+    return {
+        "flash": flash_message,
+        "request": request,
+        "base_path": request.app["base_path"],
+        "base_path_prefix": request.app["base_path_prefix"],
+        "user": None,
+    }
+
+
+async def login_action(request: web.Request):
+    post_data = await request.post()
+    username = post_data.get("username", "").strip()
+    password = post_data.get("password", "")
+    session = await get_session(request)
+    auth_manager = request.app["auth_manager"]
+
+    # Reload credentials in case they were updated externally.
+    auth_manager.reload()
+
+    if username == auth_manager.username and auth_manager.verify_password(password):
+        session["user"] = {"username": auth_manager.username}
+        session["flash"] = {"type": "success", "message": "Logged in successfully."}
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    session["flash"] = {"type": "error", "message": "Invalid username or password."}
+    raise web.HTTPFound(_with_base_path(request.app, "/login"))
+
+
+async def logout_action(request: web.Request):
+    session = await get_session(request)
+    session.invalidate()
+    session = await get_session(request)
+    session["flash"] = {"type": "success", "message": "Signed out successfully."}
+    raise web.HTTPFound(_with_base_path(request.app, "/login"))
+
+
+async def change_credentials_action(request: web.Request):
+    session = await _require_auth(request)
+    post_data = await request.post()
+    current_password = post_data.get("current_password", "")
+    new_username = post_data.get("new_username", "").strip()
+    new_password = post_data.get("new_password", "")
+    confirm_password = post_data.get("confirm_password", "")
+
+    auth_manager = request.app["auth_manager"]
+
+    # Ensure we use the latest credentials when validating.
+    auth_manager.reload()
+
+    if not auth_manager.verify_password(current_password):
+        session["flash"] = {"type": "error", "message": "Current password was incorrect."}
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    if not new_username:
+        session["flash"] = {"type": "error", "message": "New username must not be empty."}
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    if not new_password:
+        session["flash"] = {"type": "error", "message": "New password must not be empty."}
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    if new_password != confirm_password:
+        session["flash"] = {"type": "error", "message": "New password confirmation does not match."}
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    if len(new_password) < 8:
+        session["flash"] = {
+            "type": "error",
+            "message": "New password must be at least 8 characters long.",
+        }
+        raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+    auth_manager.update_credentials(new_username, new_password)
+    session["user"] = {"username": auth_manager.username}
+    session["flash"] = {"type": "success", "message": "Credentials updated successfully."}
+    raise web.HTTPFound(_with_base_path(request.app, "/configure"))
+
+
 def setup_routes(app: web.Application, base_path: str = "/") -> None:
     prefix = "" if base_path in ("", "/") else base_path.rstrip("/")
 
@@ -174,6 +272,15 @@ def setup_routes(app: web.Application, base_path: str = "/") -> None:
     app.router.add_get(configure_route, configure_page)
     if configure_route != "/" and not configure_route.endswith("/"):
         app.router.add_get(f"{configure_route}/", configure_page)
+
+    login_route = route_path("/login")
+    logout_route = route_path("/logout")
+    change_credentials_route = route_path("/auth/change")
+
+    app.router.add_get(login_route, login_page)
+    app.router.add_post(login_route, login_action)
+    app.router.add_post(logout_route, logout_action)
+    app.router.add_post(change_credentials_route, change_credentials_action)
 
     app.router.add_post(route_path("/gost/install"), gost_install_action)
     app.router.add_post(route_path("/gost/add"), gost_add_action)
