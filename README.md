@@ -28,6 +28,8 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh -o install.sh
 chmod +x install.sh
 sudo ./install.sh
+```
+```bash
 # First-time credentials (run after installer finishes)
 sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials --generate
 ```
