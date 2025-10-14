@@ -362,12 +362,31 @@ cleanup_stale_pid() {
     fi
 }
 
+stop_existing_daemon() {
+    if [[ -f "${PID_FILE}" ]]; then
+        local running_pid
+        running_pid="$(cat "${PID_FILE}" 2>/dev/null || true)"
+        if [[ -n "${running_pid}" ]] && kill -0 "${running_pid}" 2>/dev/null; then
+            log "Stopping existing WebUI daemon (PID ${running_pid})..."
+            kill "${running_pid}" 2>/dev/null || true
+            sleep 2
+            if kill -0 "${running_pid}" 2>/dev/null; then
+                log "Existing daemon still running; forcing termination."
+                kill -9 "${running_pid}" 2>/dev/null || true
+                sleep 1
+            fi
+            rm -f "${PID_FILE}"
+        fi
+    fi
+}
+
 start_daemon() {
     if ! command -v shifter-toolkit >/dev/null 2>&1; then
         log "Cannot locate 'shifter-toolkit' in PATH. Skipping background start."
         return 1
     fi
 
+    stop_existing_daemon
     cleanup_stale_pid
 
     if [[ -f "${PID_FILE}" ]]; then
@@ -485,14 +504,23 @@ fi
 INSTALL_ROOT="$(cd "${TARGET_DIR}" 2>/dev/null && pwd || printf '%s' "${TARGET_DIR}")"
 
 if [[ -n "${GENERATED_USERNAME}" && -n "${GENERATED_PASSWORD}" ]]; then
-    ACCESS_CREDS="Username: ${GENERATED_USERNAME}\nPassword: ${GENERATED_PASSWORD}"
+    ACCESS_CREDS="$(cat <<EOF
+Username: ${GENERATED_USERNAME}
+Password: ${GENERATED_PASSWORD}
+EOF
+)"
 else
-    ACCESS_CREDS="Username: (existing)\nPassword: (existing - unchanged)"
+    ACCESS_CREDS="$(cat <<'EOF'
+Username: (existing)
+Password: (existing - unchanged)
+EOF
+)"
 fi
 
 printf '\n\033[32m%s\033[0m\n' "$(cat <<EOF
 Full access URL: ${FULL_ACCESS_URL}
-Base path: ${INSTALL_ROOT}
+Install directory: ${INSTALL_ROOT}
+Web UI base path: ${BASE_PATH}
 ${ACCESS_CREDS}
 EOF
 )"
