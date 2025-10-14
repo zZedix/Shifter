@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# shifter-installer-branch: next
+# shifter-installer-branch: main
 
 # Default branch to install from GitHub.
 # Git branch to install; override via WEBUI_BRANCH if needed.
-INSTALLER_SOURCE="${BASH_SOURCE[0]:-}"
-INSTALLER_BRANCH_HINT=""
-if [[ -n "${INSTALLER_SOURCE}" ]] && [[ -r "${INSTALLER_SOURCE}" ]]; then
-    INSTALLER_BRANCH_HINT="$(grep -E '^# shifter-installer-branch:' "${INSTALLER_SOURCE}" 2>/dev/null | awk -F': ' 'NR==1 {print $2}')"
-fi
-DEFAULT_BRANCH="${WEBUI_BRANCH:-${INSTALLER_BRANCH_HINT:-main}}"
+DEFAULT_BRANCH="${WEBUI_BRANCH:-main}"
 REPO_URL="https://github.com/zZedix/Shifter.git"
 TARGET_DIR="${TARGET_DIR:-$HOME/Shifter}"
 PID_FILE="${TARGET_DIR}/shifter-webui.pid"
@@ -40,6 +35,37 @@ else
     INSTALLER_INTERACTIVE=0
 fi
 NONINTERACTIVE_MSG_PRINTED=0
+
+random_alnum() {
+    local length="${1:-16}"
+    LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${length}"
+}
+
+fallback_generate_credentials() {
+    if ! command -v shifter-toolkit >/dev/null 2>&1; then
+        error "Unable to fallback credential generation because 'shifter-toolkit' CLI is not available."
+        exit 1
+    fi
+
+    local username="shifter-$(random_alnum 6)"
+    local output password
+
+    log "Falling back to shifter-toolkit CLI for credential generation..."
+    if ! output="$(SHIFTER_CONFIG_DIR="${CONFIG_DIR}" shifter-toolkit reset-credentials --username "${username}" --generate --length 20 2>&1)"; then
+        error "Credential fallback failed:\n${output}"
+        exit 1
+    fi
+
+    password="$(printf '%s\n' "${output}" | awk -F': ' '/Password:/ {print $2}' | tail -n1)"
+    if [[ -z "${password}" ]]; then
+        error "Fallback credential generation succeeded but password could not be parsed. Output:\n${output}"
+        exit 1
+    fi
+
+    GENERATED_USERNAME="${username}"
+    GENERATED_PASSWORD="${password}"
+    log "Credentials generated via fallback."
+}
 
 log() {
     printf '[Shifter Toolkit installer] %s\n' "$*"
@@ -198,13 +224,22 @@ generate_credentials() {
     fi
 
     log "Generating secure WebUI credentials..."
-    local output
+
+    local output=""
+    local python_status=0
+    local python_cmd=(python3)
+
+    if command -v timeout >/dev/null 2>&1; then
+        python_cmd=(timeout 60 python3)
+    fi
+
     output="$(
-        CONFIG_DIR="${CONFIG_DIR}" AUTH_FILE="${AUTH_FILE}" python3 - <<'PY'
+        CONFIG_DIR="${CONFIG_DIR}" AUTH_FILE="${AUTH_FILE}" PYTHONUNBUFFERED=1 "${python_cmd[@]}" - <<'PY'
 import json
 import os
 import secrets
 import string
+import sys
 import bcrypt
 from pathlib import Path
 
@@ -229,10 +264,16 @@ try:
 except OSError:
     pass
 
-print(f"USERNAME={username}")
-print(f"PASSWORD={password}")
+sys.stdout.write(f"USERNAME={username}\nPASSWORD={password}\n")
+sys.stdout.flush()
 PY
-    )"
+    )" || python_status=$?
+
+    if [[ ${python_status} -ne 0 || -z "${output}" ]]; then
+        log "Python-based credential generation failed or timed out (exit code: ${python_status})."
+        fallback_generate_credentials
+        return
+    fi
 
     while IFS='=' read -r key value; do
         case "${key}" in
