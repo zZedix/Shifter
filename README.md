@@ -40,8 +40,8 @@ pip install -e .
 # 📋 Review available commands
 sudo shifter-toolkit --help
 
-# 🌐 Launch the web dashboard (http://127.0.0.1:2063 by default)
-sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path /admin-panel
+# 🌐 Get your Web Dashboard Basepath in case you forgot yours
+sudo cat /root/Shifter/shifter-webui.basepath
 
 # 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
