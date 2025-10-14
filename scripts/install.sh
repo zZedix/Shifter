@@ -263,9 +263,9 @@ maybe_configure_https() {
         log "HTTPS configuration set via environment variable: ${answer}"
     elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
         log "HTTPS setup is optional. You can skip this step by pressing Enter."
-        log "Waiting for user input (30 seconds timeout)..."
-        if ! timeout 30 read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer <"${INSTALLER_TTY}" 2>/dev/null; then
-            log "No input received within 30 seconds. Skipping HTTPS setup."
+        log "Waiting for user input (60 seconds timeout)..."
+        if ! timeout 60 read -r -p "Do you want to enable HTTPS? [y/N] " answer <"${INSTALLER_TTY}" 2>/dev/null; then
+            log "No input received within 60 seconds. Skipping HTTPS setup."
             answer=""
         fi
     else
