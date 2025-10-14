@@ -29,8 +29,16 @@ CERT_DOMAIN=""
 CERT_EMAIL=""
 CERT_FULLCHAIN=""
 CERT_PRIVKEY=""
-INSTALLER_INTERACTIVE=1
-[[ -t 0 ]] || INSTALLER_INTERACTIVE=0
+INSTALLER_TTY=""
+if [[ -e /dev/tty && -r /dev/tty && -w /dev/tty ]]; then
+    INSTALLER_TTY="/dev/tty"
+fi
+
+if [[ -n "${INSTALLER_TTY}" ]]; then
+    INSTALLER_INTERACTIVE=1
+else
+    INSTALLER_INTERACTIVE=0
+fi
 NONINTERACTIVE_MSG_PRINTED=0
 
 log() {
@@ -269,7 +277,9 @@ maybe_configure_https() {
     if [[ -n "${SHIFTER_ENABLE_HTTPS:-}" ]]; then
         answer="${SHIFTER_ENABLE_HTTPS}"
     elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-        read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer || true
+        if ! read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer <"${INSTALLER_TTY}" 2>/dev/null; then
+            answer=""
+        fi
     else
         if [[ "${NONINTERACTIVE_MSG_PRINTED}" -eq 0 ]]; then
             log "Non-interactive install detected; HTTPS setup skipped (set SHIFTER_ENABLE_HTTPS=y to force)."
@@ -285,7 +295,9 @@ maybe_configure_https() {
             if [[ -n "${SHIFTER_DOMAIN:-}" ]]; then
                 CERT_DOMAIN="${SHIFTER_DOMAIN}"
             elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-                read -r -p "Domain name: " CERT_DOMAIN || CERT_DOMAIN=""
+                if ! read -r -p "Domain name: " CERT_DOMAIN <"${INSTALLER_TTY}" 2>/dev/null; then
+                    CERT_DOMAIN=""
+                fi
             else
                 error "HTTPS requested but SHIFTER_DOMAIN not provided in non-interactive mode."
                 return
@@ -298,7 +310,9 @@ maybe_configure_https() {
             if [[ -n "${SHIFTER_CONTACT_EMAIL:-}" ]]; then
                 CERT_EMAIL="${SHIFTER_CONTACT_EMAIL}"
             elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
-                read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL || CERT_EMAIL=""
+                if ! read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL <"${INSTALLER_TTY}" 2>/dev/null; then
+                    CERT_EMAIL=""
+                fi
             else
                 error "HTTPS requested but SHIFTER_CONTACT_EMAIL not provided in non-interactive mode."
                 return
