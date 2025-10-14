@@ -184,6 +184,47 @@ ensure_pip() {
     fi
 }
 
+safe_pip_install() {
+    local args=("$@")
+    log "Running pip install with timeout and no-input flags..."
+    
+    # Check if pip is already running
+    if pgrep -f "pip install" >/dev/null 2>&1; then
+        log "Another pip install process is running. Waiting for it to complete..."
+        while pgrep -f "pip install" >/dev/null 2>&1; do
+            sleep 5
+        done
+        log "Previous pip install completed. Proceeding..."
+    fi
+    
+    if command -v timeout >/dev/null 2>&1; then
+        if timeout 300 python3 -m pip install --no-input --timeout 300 --progress-bar on "${args[@]}"; then
+            log "pip install completed successfully."
+        else
+            error "pip install failed or timed out. Retrying with basic flags..."
+            if python3 -m pip install --no-input --disable-pip-version-check --progress-bar on "${args[@]}"; then
+                log "pip install completed successfully on retry."
+            else
+                error "pip install failed even with basic flags. Please check your Python environment."
+                return 1
+            fi
+        fi
+    else
+        log "timeout command not available, using pip with timeout flag only..."
+        if python3 -m pip install --no-input --timeout 300 --progress-bar on "${args[@]}"; then
+            log "pip install completed successfully."
+        else
+            error "pip install failed or timed out. Retrying with basic flags..."
+            if python3 -m pip install --no-input --disable-pip-version-check --progress-bar on "${args[@]}"; then
+                log "pip install completed successfully on retry."
+            else
+                error "pip install failed even with basic flags. Please check your Python environment."
+                return 1
+            fi
+        fi
+    fi
+}
+
 update_auth_cert_paths() {
     if [[ -z "${CERT_FULLCHAIN}" || -z "${CERT_PRIVKEY}" ]]; then
         return
@@ -320,11 +361,21 @@ printf '%s\n' "${local_version}" > "${VERSION_FILE}"
 printf '%s\n' "${BASE_PATH}" > "${BASE_PATH_FILE}"
 mkdir -p "${CONFIG_DIR}"
 
-log "Installing Python dependencies..."
-python3 -m pip install --upgrade pip setuptools wheel
+log "Installing Python dependencies (this may take a few minutes)..."
+log "If this seems to hang, it's normal - pip is downloading and installing packages."
+log "You can monitor progress by watching the output above."
+log "Progress indicators will show download and installation status."
+log "Common packages being installed: aiohttp, bcrypt, jinja2, and others."
+log "This step ensures all required libraries are available."
+safe_pip_install --upgrade pip setuptools wheel
 
-log "Installing Shifter Toolkit in editable mode..."
-python3 -m pip install -e "${TARGET_DIR}"
+log "Installing Shifter Toolkit in editable mode (this may take several minutes)..."
+log "This step compiles and installs the main application - please be patient."
+log "The installation will continue automatically - no user input required."
+log "You may see compilation messages - this is normal."
+log "The application will be installed in development mode for easy updates."
+log "This allows you to modify the code and see changes immediately."
+safe_pip_install -e "${TARGET_DIR}"
 maybe_configure_https
 
 detect_host_hint() {
