@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shifter-installer-branch: next
+
 # Default branch to install from GitHub.
 # Git branch to install; override via WEBUI_BRANCH if needed.
-DEFAULT_BRANCH="${WEBUI_BRANCH:-main}"
+INSTALLER_SOURCE="${BASH_SOURCE[0]:-}"
+INSTALLER_BRANCH_HINT=""
+if [[ -n "${INSTALLER_SOURCE}" ]] && [[ -r "${INSTALLER_SOURCE}" ]]; then
+    INSTALLER_BRANCH_HINT="$(grep -E '^# shifter-installer-branch:' "${INSTALLER_SOURCE}" 2>/dev/null | awk -F': ' 'NR==1 {print $2}')"
+fi
+DEFAULT_BRANCH="${WEBUI_BRANCH:-${INSTALLER_BRANCH_HINT:-main}}"
 REPO_URL="https://github.com/zZedix/Shifter.git"
 TARGET_DIR="${TARGET_DIR:-$HOME/Shifter}"
 PID_FILE="${TARGET_DIR}/shifter-webui.pid"
@@ -22,6 +29,9 @@ CERT_DOMAIN=""
 CERT_EMAIL=""
 CERT_FULLCHAIN=""
 CERT_PRIVKEY=""
+INSTALLER_INTERACTIVE=1
+[[ -t 0 ]] || INSTALLER_INTERACTIVE=0
+NONINTERACTIVE_MSG_PRINTED=0
 
 log() {
     printf '[Shifter Toolkit installer] %s\n' "$*"
@@ -249,22 +259,50 @@ PY
 }
 
 maybe_configure_https() {
-    local answer
+    local answer choice
     CERTBOT_ENABLED=0
     CERT_DOMAIN=""
     CERT_EMAIL=""
     CERT_FULLCHAIN=""
     CERT_PRIVKEY=""
-    read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer || true
-    case "${answer}" in
-        [yY][eE][sS]|[yY])
-            read -r -p "Domain name: " CERT_DOMAIN || CERT_DOMAIN=""
+
+    if [[ -n "${SHIFTER_ENABLE_HTTPS:-}" ]]; then
+        answer="${SHIFTER_ENABLE_HTTPS}"
+    elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
+        read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer || true
+    else
+        if [[ "${NONINTERACTIVE_MSG_PRINTED}" -eq 0 ]]; then
+            log "Non-interactive install detected; HTTPS setup skipped (set SHIFTER_ENABLE_HTTPS=y to force)."
+            NONINTERACTIVE_MSG_PRINTED=1
+        fi
+        return
+    fi
+
+    choice="$(printf '%s' "${answer}" | tr '[:upper:]' '[:lower:]')"
+
+    case "${choice}" in
+        y|yes)
+            if [[ -n "${SHIFTER_DOMAIN:-}" ]]; then
+                CERT_DOMAIN="${SHIFTER_DOMAIN}"
+            elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
+                read -r -p "Domain name: " CERT_DOMAIN || CERT_DOMAIN=""
+            else
+                error "HTTPS requested but SHIFTER_DOMAIN not provided in non-interactive mode."
+                return
+            fi
             CERT_DOMAIN="$(printf '%s' "${CERT_DOMAIN}" | xargs || true)"
             if [[ -z "${CERT_DOMAIN}" ]]; then
                 log "No domain provided; skipping HTTPS setup."
                 return
             fi
-            read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL || CERT_EMAIL=""
+            if [[ -n "${SHIFTER_CONTACT_EMAIL:-}" ]]; then
+                CERT_EMAIL="${SHIFTER_CONTACT_EMAIL}"
+            elif [[ "${INSTALLER_INTERACTIVE}" -eq 1 ]]; then
+                read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL || CERT_EMAIL=""
+            else
+                error "HTTPS requested but SHIFTER_CONTACT_EMAIL not provided in non-interactive mode."
+                return
+            fi
             CERT_EMAIL="$(printf '%s' "${CERT_EMAIL}" | xargs || true)"
             if [[ -z "${CERT_EMAIL}" ]]; then
                 log "No contact email provided; skipping HTTPS setup."
