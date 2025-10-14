@@ -10,9 +10,18 @@ PID_FILE="${TARGET_DIR}/shifter-webui.pid"
 LOG_FILE="${TARGET_DIR}/shifter-webui.log"
 BASE_PATH_FILE="${TARGET_DIR}/shifter-webui.basepath"
 VERSION_FILE="${TARGET_DIR}/shifter-version.txt"
+CONFIG_DIR="${TARGET_DIR}/config"
+AUTH_FILE="${CONFIG_DIR}/auth.json"
 BASE_PATH=""
 APT_UPDATED=0
 PACMAN_SYNCED=0
+GENERATED_USERNAME=""
+GENERATED_PASSWORD=""
+CERTBOT_ENABLED=0
+CERT_DOMAIN=""
+CERT_EMAIL=""
+CERT_FULLCHAIN=""
+CERT_PRIVKEY=""
 
 log() {
     printf '[Shifter Toolkit installer] %s\n' "$*"
@@ -164,6 +173,136 @@ ensure_pip() {
     fi
 }
 
+generate_credentials() {
+    if [[ -f "${AUTH_FILE}" ]]; then
+        log "Authentication configuration already exists at ${AUTH_FILE}; skipping credential generation."
+        return
+    fi
+
+    log "Generating secure WebUI credentials..."
+    local output
+    output="$(
+        CONFIG_DIR="${CONFIG_DIR}" AUTH_FILE="${AUTH_FILE}" python3 - <<'PY'
+import json
+import os
+import secrets
+import string
+import bcrypt
+from pathlib import Path
+
+config_dir = Path(os.environ["CONFIG_DIR"])
+auth_file = Path(os.environ["AUTH_FILE"])
+config_dir.mkdir(parents=True, exist_ok=True)
+
+alphabet = string.ascii_letters + string.digits
+username = "shifter-" + "".join(secrets.choice(alphabet) for _ in range(6))
+password = "".join(secrets.choice(alphabet) for _ in range(20))
+password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+payload = {
+    "username": username,
+    "password_hash": password_hash,
+    "cert_paths": {}
+}
+
+auth_file.write_text(json.dumps(payload, indent=4) + "\n", encoding="utf-8")
+try:
+    os.chmod(auth_file, 0o600)
+except OSError:
+    pass
+
+print(f"USERNAME={username}")
+print(f"PASSWORD={password}")
+PY
+    )"
+
+    while IFS='=' read -r key value; do
+        case "${key}" in
+            USERNAME) GENERATED_USERNAME="${value}" ;;
+            PASSWORD) GENERATED_PASSWORD="${value}" ;;
+        esac
+    done <<<"${output}"
+}
+
+update_auth_cert_paths() {
+    if [[ -z "${CERT_FULLCHAIN}" || -z "${CERT_PRIVKEY}" ]]; then
+        return
+    fi
+
+    python3 - <<PY
+import json
+from pathlib import Path
+
+auth_path = Path(r"""${AUTH_FILE}""")
+if not auth_path.exists():
+    raise SystemExit("auth.json missing; cannot write certificate paths.")
+
+with auth_path.open("r", encoding="utf-8") as handle:
+    data = json.load(handle)
+
+cert_paths = data.setdefault("cert_paths", {})
+cert_paths["fullchain"] = r"""${CERT_FULLCHAIN}"""
+cert_paths["privkey"] = r"""${CERT_PRIVKEY}"""
+
+auth_path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
+PY
+}
+
+maybe_configure_https() {
+    local answer
+    CERTBOT_ENABLED=0
+    CERT_DOMAIN=""
+    CERT_EMAIL=""
+    CERT_FULLCHAIN=""
+    CERT_PRIVKEY=""
+    read -r -p "Do you want to run with a domain (HTTPS)? [y/N] " answer || true
+    case "${answer}" in
+        [yY][eE][sS]|[yY])
+            read -r -p "Domain name: " CERT_DOMAIN || CERT_DOMAIN=""
+            CERT_DOMAIN="$(printf '%s' "${CERT_DOMAIN}" | xargs || true)"
+            if [[ -z "${CERT_DOMAIN}" ]]; then
+                log "No domain provided; skipping HTTPS setup."
+                return
+            fi
+            read -r -p "Contact email for Let's Encrypt: " CERT_EMAIL || CERT_EMAIL=""
+            CERT_EMAIL="$(printf '%s' "${CERT_EMAIL}" | xargs || true)"
+            if [[ -z "${CERT_EMAIL}" ]]; then
+                log "No contact email provided; skipping HTTPS setup."
+                return
+            fi
+
+            require_command certbot certbot certbot certbot
+
+            log "Requesting Let's Encrypt certificate for ${CERT_DOMAIN}..."
+            if certbot certonly --standalone --preferred-challenges http --keep-until-expiring --non-interactive --agree-tos -d "${CERT_DOMAIN}" -m "${CERT_EMAIL}"; then
+                CERTBOT_ENABLED=1
+                CERT_FULLCHAIN="/etc/letsencrypt/live/${CERT_DOMAIN}/fullchain.pem"
+                CERT_PRIVKEY="/etc/letsencrypt/live/${CERT_DOMAIN}/privkey.pem"
+                if [[ ! -f "${CERT_FULLCHAIN}" || ! -f "${CERT_PRIVKEY}" ]]; then
+                    error "Certificate files not found after certbot run. Expected ${CERT_FULLCHAIN} and ${CERT_PRIVKEY}."
+                    CERT_DOMAIN=""
+                    CERT_EMAIL=""
+                    CERT_FULLCHAIN=""
+                    CERT_PRIVKEY=""
+                    CERTBOT_ENABLED=0
+                    return
+                fi
+                update_auth_cert_paths
+                log "Certificates obtained and paths recorded."
+            else
+                error "Certbot failed to issue a certificate for ${CERT_DOMAIN}."
+                CERT_DOMAIN=""
+                CERT_EMAIL=""
+                CERT_FULLCHAIN=""
+                CERT_PRIVKEY=""
+            fi
+            ;;
+        *)
+            log "HTTPS setup skipped."
+            ;;
+    esac
+}
+
 ensure_pip
 
 load_base_path
@@ -191,6 +330,9 @@ python3 -m pip install --upgrade pip setuptools wheel
 
 log "Installing Shifter Toolkit in editable mode..."
 python3 -m pip install -e "${TARGET_DIR}"
+
+generate_credentials
+maybe_configure_https
 
 detect_host_hint() {
     local host_ip=""
@@ -238,35 +380,57 @@ start_daemon() {
     fi
 
     log "Starting WebUI daemon at path '${BASE_PATH}' (logs: ${LOG_FILE})..."
-    nohup shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path "${BASE_PATH}" >"${LOG_FILE}" 2>&1 &
+    local env_prefix=(env SHIFTER_CONFIG_DIR="${CONFIG_DIR}")
+    if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+        env_prefix+=(SHIFTER_SESSION_SECURE="true")
+    fi
+    nohup "${env_prefix[@]}" shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path "${BASE_PATH}" >"${LOG_FILE}" 2>&1 &
     local new_pid=$!
     sleep 1
     if kill -0 "${new_pid}" 2>/dev/null; then
         echo "${new_pid}" > "${PID_FILE}"
         log "WebUI started in background with PID ${new_pid}."
-        log "Visit: http://$(detect_host_hint):2063${BASE_PATH}"
+        local visit_host="${CERT_DOMAIN:-$(detect_host_hint)}"
+        local protocol="http"
+        if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+            protocol="https"
+        fi
+        log "Visit: ${protocol}://${visit_host}:2063${BASE_PATH}"
     else
         log "Failed to start WebUI daemon. Check ${LOG_FILE} for details."
         return 1
     fi
 }
 
+launch_env="SHIFTER_CONFIG_DIR='${CONFIG_DIR}'"
+if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+    launch_env="${launch_env} SHIFTER_SESSION_SECURE='true'"
+fi
+
 if [[ "$(id -u)" -eq 0 ]]; then
     start_daemon || true
 else
     log "Run this script with sudo/root if you want the WebUI to start as a daemon automatically."
     log "You can manually launch it with:"
-    echo "  sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path '${BASE_PATH}' &> ${LOG_FILE} &"
+    echo "  sudo ${launch_env} shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path '${BASE_PATH}' &> ${LOG_FILE} &"
 fi
 
-HOST_HINT="$(detect_host_hint)"
+if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+    HOST_HINT="${CERT_DOMAIN}"
+else
+    HOST_HINT="$(detect_host_hint)"
+fi
+PROTOCOL="http"
+if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+    PROTOCOL="https"
+fi
 
 cat <<EOF
 
 Installation complete!
 
 To run the Web UI manually:
-  sudo shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path '${BASE_PATH}'
+  sudo ${launch_env} shifter-toolkit serve --host 0.0.0.0 --port 2063 --base-path '${BASE_PATH}'
 
 To open the CLI help:
   shifter-toolkit --help
@@ -279,7 +443,28 @@ Log file:
 Project directory: ${TARGET_DIR}
 Web UI path: ${BASE_PATH}
 Endpoint example:
-  http://${HOST_HINT}:2063${BASE_PATH}
+  ${PROTOCOL}://${HOST_HINT}:2063${BASE_PATH}
+Credentials file:
+  ${AUTH_FILE}
 Base path record:
   ${BASE_PATH_FILE}
 EOF
+
+if [[ "${CERTBOT_ENABLED}" -eq 1 ]]; then
+cat <<EOF
+
+Certificate paths (stored in auth.json):
+  fullchain: ${CERT_FULLCHAIN}
+  privkey: ${CERT_PRIVKEY}
+EOF
+fi
+
+if [[ -n "${GENERATED_USERNAME}" && -n "${GENERATED_PASSWORD}" ]]; then
+cat <<EOF
+
+Generated WebUI credentials (store securely):
+  Username: ${GENERATED_USERNAME}
+  Password: ${GENERATED_PASSWORD}
+
+EOF
+fi
