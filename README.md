@@ -10,7 +10,8 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 - 🎯 **Unified Control Panel** - Install, inspect, and remove tunnelling services
 - 💻 **CLI Interface** - Colorful status output and command groups per service  
-- 🌐 **Web Dashboard** - AIOHTTP + Jinja2 powered dashboard
+- 🌐 **Web Dashboard** - AIOHTTP + Jinja2 powered dashboard with login
+- 🔒 **HTTPS Ready** - Optional Let's Encrypt provisioning during install
 - 📦 **Packaged Templates** - Reproducible deployments without network fetches
 - 📚 **PyPI Ready** - Complete packaging with entry points and documentation
 
@@ -24,7 +25,7 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 
 ### ⚡ One-Line Installer
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/next/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh | sudo bash
 ```
 
 ### 🔧 From Source
@@ -40,18 +41,18 @@ pip install -e .
 # 📋 Review available commands
 sudo shifter-toolkit --help
 
-# 🌐 Get your Web Dashboard Basepath in case you forgot yours
-sudo cat /root/Shifter/shifter-webui.basepath
+# 🔐 View the generated WebUI credentials (username + bcrypt hash)
+sudo cat /root/Shifter/config/auth.json
+
+# 🔄 Rotate credentials (prompts or use --generate for a random password)
+sudo shifter-toolkit reset-credentials --generate
 
 # 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
-
-# 🔐 Reset your login credentials
-sudo shifter-toolkit reset-credentials
 ```
 
 > ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
-> 💡 **Installer tip**: The one-line installer writes a unique path slug to `~/Shifter/shifter-webui.basepath`. Combine that with your host and port (e.g., `http://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
+> 💡 **Installer tip**: The installer writes a unique path slug to `~/Shifter/shifter-webui.basepath` and stores the generated username/password hash in `~/Shifter/config/auth.json`. Combine the base path with your host/port (e.g., `https://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
 
 ## 📚 Command Reference
 
@@ -66,13 +67,15 @@ sudo shifter-toolkit reset-credentials
 
 Run `sudo shifter-toolkit <group> --help` for all arguments on a specific command family.
 
-## 🌐 Web Dashboard
+## 🌐 Web Dashboard & Security
 
 Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.
 
 - 📁 Templates live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
-- 🔐 Sessions are backed by encrypted cookies
-- 🔑 Set `AIOHTTP_SECRET_KEY` in the environment to supply a persistent key across restarts
+- 🔐 Installer generates a random username/password stored securely in `~/Shifter/config/auth.json`
+- 🔑 Reset credentials any time with `sudo shifter-toolkit reset-credentials` (supports prompts or random generation)
+- 🧁 Sessions are backed by encrypted cookies—set `AIOHTTP_SECRET_KEY` to persist the cookie key across restarts
+- 🔒 Optional HTTPS provisioning via Let's Encrypt when the installer runs (interactive prompt or `SHIFTER_ENABLE_HTTPS`, `SHIFTER_DOMAIN`, `SHIFTER_CONTACT_EMAIL`)
 
 ## 📦 Packaged Templates
 
