@@ -45,6 +45,9 @@ sudo cat /root/Shifter/shifter-webui.basepath
 
 # 🔍 Inspect the health of all managed services
 sudo shifter-toolkit status
+
+# 🔐 Reset your login credentials
+sudo shifter-toolkit reset-credentials
 ```
 
 > ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
