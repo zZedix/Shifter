@@ -28,10 +28,8 @@ A production-ready toolkit for provisioning and operating secure network tunnels
 curl -fsSL https://raw.githubusercontent.com/zZedix/Shifter/main/scripts/install.sh -o install.sh
 chmod +x install.sh
 sudo ./install.sh
-```
-```bash
 # First-time credentials (run after installer finishes)
-sudo shifter-toolkit reset-credentials --generate
+sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials --generate
 ```
 
 ### 🔧 From Source
@@ -48,7 +46,7 @@ pip install -e .
 sudo shifter-toolkit --help
 
 # 🔐 Create or update WebUI credentials
-sudo shifter-toolkit reset-credentials --generate
+sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials --generate
 
 # 📄 Inspect the stored credential hash (optional)
 sudo cat /root/Shifter/config/auth.json
@@ -58,7 +56,7 @@ sudo shifter-toolkit status
 ```
 
 > ⚠️ **Note**: Each sub-command validates that it is executed with root privileges before touching the system.
-> 💡 **Installer tip**: The installer writes a unique path slug to `~/Shifter/shifter-webui.basepath`. After the install, run `sudo shifter-toolkit reset-credentials --generate` to create your login and store the hash in `~/Shifter/config/auth.json`. Combine the base path with your host/port (e.g., `https://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
+> 💡 **Installer tip**: The installer writes a unique path slug to `~/Shifter/shifter-webui.basepath`. After the install, run `sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials --generate` to create your login and store the hash in `~/Shifter/config/auth.json`. Combine the base path with your host/port (e.g., `https://server:2063$(cat ~/Shifter/shifter-webui.basepath)`) to reach the dashboard.
 
 ## 📚 Command Reference
 
@@ -78,8 +76,8 @@ Run `sudo shifter-toolkit <group> --help` for all arguments on a specific comman
 Shifter ships with a lightweight dashboard that mirrors the CLI capabilities.
 
 - 📁 Templates live inside the package (`shifter/web/templates`) so deployments don't rely on external assets
-- 🔐 Generate credentials with `sudo shifter-toolkit reset-credentials --generate` after installing (hash stored securely in `~/Shifter/config/auth.json`)
-- 🔑 Reset credentials any time with `sudo shifter-toolkit reset-credentials` (supports prompts or random generation)
+- 🔐 Generate credentials with `sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials --generate` after installing (hash stored securely in `~/Shifter/config/auth.json`)
+- 🔑 Reset credentials any time with `sudo SHIFTER_AUTH_FILE='/root/Shifter/config/auth.json' shifter-toolkit reset-credentials` (supports prompts or random generation)
 - 🧁 Sessions are backed by encrypted cookies—set `AIOHTTP_SECRET_KEY` to persist the cookie key across restarts
 - 🔒 Optional HTTPS provisioning via Let's Encrypt when the installer runs (interactive prompt or `SHIFTER_ENABLE_HTTPS`, `SHIFTER_DOMAIN`, `SHIFTER_CONTACT_EMAIL`)
 
